@@ -1,0 +1,8 @@
+.DS_Store
+__pycache__/
+*.pyc
+# Interstitial working files agents and operators produce while running a process
+# (setup reports, change proposals, bootstrap summaries, deck sources, scratch drafts).
+# Never permanent records, never committed.
+tmp/*
+!tmp/.gitkeep
