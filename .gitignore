@@ -6,3 +6,8 @@ __pycache__/
 # Never permanent records, never committed.
 tmp/*
 !tmp/.gitkeep
+# Files under docs/ stay local until an operator explicitly adds one to this repository.
+docs/**
+!docs/README.md
+!docs/AGENTS.md
+!docs/build-any-ai-application.md

@@ -6,7 +6,7 @@ Every founder feels the pressure to put AI to work in their business. Most of th
 
 This document gives you the production line for building any AI-native application directly inside a repository of structured Markdown files, governed by explicit contracts and enforced by deterministic Python or TypeScript scripts. Instead of building a bespoke database and custom screens by hand, you store your global context, business processes, document formats, client records, and agent skills in a Git repository. Modern coding agents already know how to read, write, search, and version-control a repository. When you give those agents a strict contract, they run the stations on your line while you set the intent and approve the output.
 
-Deploying this approach follows a strict sequence. First, you pick one AI environment - Claude, OpenAI, or Gemini - and optimize your entire repository for it.  (We can give you a long justification on why we don't recommend spening time on vendor neutrality.  Interestingly, this comes later.)  Second, you run the `create-application` skill in this repository. That skill interviews you, writes your global context in the root `AGENTS.md` file, maps your workflows into stage-by-stage process documents in `process/`, defines the data contracts in `formats/`, wires up your folder-level agent rules and operational skills, and generates the verification script in `scripts/check.py`. Third, you run your business through those skills and watching where you have to step in and edit by hand. Every time you catch yourself fixing the same mistake twice, you feed that observation into `improve-process`, which upgrades your processes, formats, skills, and scripts in one coordinated pass.
+Deploying this approach follows a strict sequence. First, you pick one AI environment - Claude, OpenAI, or Gemini - and optimize your entire repository for it.  (We can give you a long justification on why we don't recommend spening time on vendor neutrality.  Interestingly, this comes later.)  Second, you run the `setup-application` skill in this repository. That skill interviews you, writes your global context in the root `AGENTS.md` file, maps your workflows into stage-by-stage process documents in `process/`, defines the data contracts in `formats/system/` and `formats/clients/`, fills the shared records in `system/`, wires up your folder-level agent rules and operational skills, and generates the verification script in `scripts/check.py`. Third, you run your business through those skills and watching where you have to step in and edit by hand. Every time you catch yourself fixing the same mistake twice, you feed that observation into `improve-process`, which upgrades your processes, formats, skills, and scripts in one coordinated pass.
 
 ---
 
@@ -102,8 +102,8 @@ Every governed document opens with a standardized YAML block at the very top of 
 ```yaml
 ---
 title: Acme Corp — Client Profile
-format: client
-format_version: 1
+format: clients/client
+format_version: 2
 client: acme-corp
 created: 2026-10-20
 created_by: founder@company.com
@@ -113,7 +113,7 @@ updated_by: founder@company.com
 ```
 
 * `title` is the human-readable name of the document.
-* `format` names the exact contract in `formats/<format>.md` that governs this file.
+* `format` names the exact contract by its path relative to `formats/` without `.md`, such as `formats/clients/client.md` (`clients/client`) or `formats/system/users.md` (`system/users`).
 * `format_version` is the integer version of that format contract.
 * `client` (when inside a client folder) matches the folder's slug.
 * `created`, `created_by`, `updated`, and `updated_by` record the dates (`YYYY-MM-DD`) and the human operator's email address. An agent name is never allowed here.
@@ -145,23 +145,23 @@ Businesses evolve, and your document schemas will evolve with them. Every format
 
 ### 5.1. How the Mechanisms Fit Together (Precedence and Creation Order)
 
-An AI application in this framework is built from seven interlocking mechanisms. The order in which `create-application` builds them when you start a repository is the exact order of authority when two files disagree:
+An AI application in this framework is built from seven interlocking mechanisms. The order in which `setup-application` builds them when you start a repository is the exact order of authority when two files disagree:
 
 | Order | Mechanism | Location | Role on the Factory Line | Precedence Rule |
 | --- | --- | --- | --- | --- |
 | **1** | **Global Context** | Root `AGENTS.md` | Defines what the application is, what is out of scope, the target AI environment, and the rules that apply everywhere. | Governs the entire repository. No nested file, process, or skill may violate it. |
 | **2** | **Processes** | `process/*.md` | Defines the business workflows stage by stage: entry criteria, stage work, graduation criteria, branching paths, system of record, and implementing skills. | States business intent. Governs what skills must do, subject to the data structures allowed by Formats. |
-| **3** | **Formats** | `formats/*.md` | Defines the exact schema—headers, sections, vocabularies, and rules—for every document type in the repository. | **The format wins over skills and processes** on what a document holds. If a process needs a new field, update the format first. |
+| **3** | **Formats** | `formats/system/*.md` and `formats/clients/*.md` | Defines the exact schema—headers, sections, vocabularies, and rules—for every document type in the repository. | **The format wins over skills and processes** on what a document holds. If a process needs a new field, update the format first. |
 | **4** | **Subtree Agents** | `<dir>/AGENTS.md` | Defines local guardrails for agents working inside a specific directory (`process/`, `formats/`, `clients/`, `system/`, `docs/`). | Adds stricter rules for its folder; never relaxes the root `AGENTS.md`. |
 | **5** | **Skills** | `<skills-dir>/<name>/SKILL.md` | Defines the step-by-step procedure an agent runs when invoked to execute a stage of a process. | Operates strictly inside `AGENTS.md`, `process/`, and `formats/`. If a skill disagrees with a format, fix the skill. |
 | **6** | **Deterministic Scripts** | `scripts/*.py` (or `.ts`) | Enforces format schemas, reference resolution, header attribution, and skill links mechanically. | The automated gatekeeper. No skill run or commit is complete until `check.py` exits with zero errors. |
-| **7** | **Client, Catalog & System Data** | `clients/<slug>/`, catalogs, `system/` | Holds the live business records, entity foundation files, plans, decision logs, open issues, produced deliverables, and the repository-wide question journal. | Must conform 100% to `formats/` and pass `scripts/check.py` at all times. |
+| **7** | **Client, Catalog & System Data** | `clients/<slug>/`, catalogs, `system/` | Holds client records and the shared application records: users, roles, client assignments, external-system guidance, the application backlog, and the question journal. | Must conform 100% to `formats/` and pass `scripts/check.py` at all times. |
 
 ### 5.2. Global Context (Root `AGENTS.md`)
 
 The root `AGENTS.md` file is the master contract for your application. Every agent session loads it first, and its rules stay in force for every prompt across every folder.
 
-In our framework, the root `AGENTS.md` is governed by `formats/global-context.md` and contains six mandatory sections:
+In our framework, the root `AGENTS.md` is governed by `formats/system/global-context.md` and contains six mandatory sections:
 1. **`# Application Overview`** — A blunt, clear statement of what this application does, who operates it, and the business outcomes it produces.
 2. **`# Scope and Out of Scope`** — Two explicit subsections (`## In Scope` and `## Out of Scope`) drawing a hard boundary around what belongs in this repository versus what happens upstream, downstream, or in external systems.
 3. **`# Target AI Environment`** — Names the single AI vendor environment this repository is optimized for (`Claude`, `OpenAI`, or `Gemini`), how skills are invoked in that environment, and which native capabilities (like Claude Artifacts, Codex terminal workflows, or Gemini workspace tools) the application uses. This choice also fixes the skills directory. This document writes that directory as the placeholder `<skills-dir>/`; the final path is resolved per target AI environment in the table in Section 7.2.
@@ -173,9 +173,9 @@ In our framework, the root `AGENTS.md` is governed by `formats/global-context.md
 5. **`# Every File`** — Universal data hygiene rules: standard YAML headers, human operator emails in `created_by` and `updated_by`, `None` for empty sections, resolving references, and running `python3 scripts/check.py` before finishing.
 6. **`# Never`** — The systemic hard lines no agent or operator may ever cross (never deleting records instead of archiving, never inventing facts or decisions, never storing credentials or payment details, never cross-referencing between isolated client folders).
 
-### 5.3. Process Definitions (`process/` and `formats/process.md`)
+### 5.3. Process Definitions (`process/` and `formats/system/process.md`)
 
-Before you design a database table or write an agent prompt, you have to define how the work actually moves through your business. That is what `process/` holds. Every workflow gets its own file in `process/<slug>.md`, governed by the default process format at `formats/process.md` and indexed in `process/README.md`.
+Before you design a database table or write an agent prompt, you have to define how the work actually moves through your business. That is what `process/` holds. Every workflow gets its own file in `process/<slug>.md`, governed by the default process format at `formats/system/process.md` and indexed in `process/README.md`.
 
 Every process document follows a strict, machine-checked structure built around discrete, handoff-sized stages:
 
@@ -199,7 +199,7 @@ Every process document follows a strict, machine-checked structure built around 
 
 ### 5.4. Format Contracts (`formats/`)
 
-A format contract is the schema for one kind of Markdown document. `formats/README.md` holds the shared rules across the entire repository (the standard header, single-record vs. multi-record heading rules, reference rules, and the table of all formats). Each `formats/<name>.md` file governs one document type and contains:
+A format contract is the schema for one kind of Markdown document. `formats/README.md` holds the shared rules across the entire repository (the standard header, single-record vs. multi-record heading rules, reference rules, and the table of all formats). System contracts live in `formats/system/`. Client contracts live in `formats/clients/`. Each contract governs one document type and contains:
 * **`# Purpose`** — Why the document exists.
 * **`# Location`** — Where files of this format live.
 * **`# Header`** — Any additions to the standard YAML front matter.
@@ -218,11 +218,11 @@ For example:
 * `formats/AGENTS.md` enforces the atomic migration rule: you never change a format without bumping `format_version`, updating every active document that uses that format, and updating `scripts/check.py` in the same commit.
 * `process/AGENTS.md` enforces that processes state business intent without duplicating format schemas or skill procedures, and that client-specific commercial overrides live in `clients/<slug>/client.md`, never in `process/`.
 * `clients/AGENTS.md` enforces strict tenant isolation: a client folder may never link to, copy from, or compare against another client folder.
-* `system/AGENTS.md` enforces the access boundary: any agent may append to and commit files in `system/`, but an agent executing a client-specific stage never reads from or writes client facts into `system/`.
+* `system/AGENTS.md` enforces the shared-data boundary: `system/` holds users, roles, assignment routing, external-system guidance, the backlog, and the question journal. An agent doing client-specific work may read users, roles, external-system guidance, and assignment rows for that client only, and never writes a client business fact into `system/`.
 
 ### 5.6. Skills (`<skills-dir>/<skill-name>/SKILL.md`)
 
-A skill is an invocable, step-by-step procedure that executes a stage (or a bounded step) of a process. Instead of typing a long prompt and hoping the AI remembers your rules, the operator invokes a skill by name (`/create-application`, `/setup-client`, `/improve-process` in Claude Code; `$create-application`, `$setup-client`, `$improve-process` in OpenAI Codex; or `@create-application` in Gemini).
+A skill is an invocable, step-by-step procedure that executes a stage (or a bounded step) of a process. Instead of typing a long prompt and hoping the AI remembers your rules, the operator invokes a skill by name (`/setup-application`, `/setup-client`, `/improve-process` in Claude Code; `$setup-application`, `$setup-client`, `$improve-process` in OpenAI Codex; or `@setup-application` in Gemini).
 
 Every skill lives in `<skills-dir>/<skill-name>/SKILL.md`, is registered in `<skills-dir>/README.md`, and opens with YAML front matter (`name` and `description`) followed by seven mandatory sections:
 1. **`## When to use`** — The exact trigger and process stage this skill serves.
@@ -258,16 +258,17 @@ Processes, formats, skills, and scripts are the machinery of your factory. Share
 
 ### 5.10. System Records (`system/`)
 
-The `system/` directory is reserved for records that belong to the repository as a whole rather than to any one client. Every agent may append to and commit files in `system/`, but the directory is not accessible to an agent doing client-specific work: it never reads from `system/`, and nothing in `system/` may hold a client fact. That boundary is enforced by `system/AGENTS.md`.
+The `system/` directory holds records shared by the whole application: users, operational roles, the role each user plays for a client, external-system guidance, the application backlog, and the question journal. `system/client-assignments.md` may name a client slug. It does not hold that client's business facts. `system/AGENTS.md` lets client-specific work read users, roles, external-system guidance, and the assignment rows for the client being served, and forbids writing client facts into `system/`.
 
-Its first record is the **Question Journal** (`system/question-journal.md`). Every question an agent asks the operator beyond the questions a skill's prompt explicitly requires is appended here as a row carrying:
+The shared records are `system/users.md`, `system/user-roles.md`, `system/client-assignments.md`, `system/external-systems.md`, `system/application-backlog.md`, and the **Question Journal** (`system/question-journal.md`). Every question an agent asks the operator beyond the questions a skill's prompt explicitly requires is appended to the journal's `# Open` table with:
 
 * **Question** — The question exactly as it was asked.
 * **Skill** — The skill that was running when the question arose, or `—` when none applied.
-* **Process** — The governing process.
+* **Process** — The governing process, or `—`.
 * **Stage** — The process stage the agent was in.
 * **LLM** — The model that asked the question.
-* **Status** — `Open` until a change absorbs it; then `Closed` with a reference to that change.
+
+When a change absorbs the question, the row moves to `# Closed` and gains a **Change** reference. It does not stay open with a status word rewritten in place.
 
 An entry is never closed by answering the question in the session. It is closed by the process change or prompting change that makes the question unnecessary, applied through `review-question-journal` and `improve-process`. A question that recurs after it was acted on is a defect in that change and reopens the entry.
 
@@ -275,35 +276,28 @@ An entry is never closed by answering the question in the session. It is closed 
 
 ## 6. Starting Skills
 
-Every repository built on this framework starts with four foundational skills in `<skills-dir>/`. Together they bootstrap the application into existence, bring clients or entities onto the line, upgrade the factory as you operate it, and turn the questions agents ask you into factory upgrades.
+Every repository built on this framework starts with the skills in `.agents/skills/`. Together they configure the application, bring clients onto the line, maintain the people who use it, capture later improvements, upgrade the factory as you operate it, and turn the questions agents ask you into factory upgrades.
 
-### 6.1. `create-application` — Bootstrapping the Application into Existence
+### 6.1. `setup-application` — Configuring the Application
 
-When you clone this base repository to build a new AI application, `create-application` is the first skill you run. Its job is to take you from a blank template to a working, vendor-optimized AI application with zero hand-wiring.
+`setup-application` is the generic setup and configuration skill. With a request, it decides which files in `system/` must change and interviews the operator for those files. With no request, it scans `system/` and the reserved framework files, checks them against their formats, and interviews until required setup is complete. An empty repository is filled in creation order, which is a full setup from scratch.
 
-**How `create-application` works:**
+**How `setup-application` works:**
 1. **Reads the Blueprint:** Reads this governing document (`docs/build-any-ai-application.md`) and inspects the current repository state.
-2. **Locks in the Target AI Environment:** Asks which AI ecosystem you are optimizing for (`Claude`, `OpenAI`, or `Gemini`) and your operator email address.
-3. **Interviews for Global Context:** Interviews you in plain language about what your business does, what this application is responsible for, what is out of scope, and the non-negotiable guardrails. It drafts the root `AGENTS.md` file conforming to `formats/global-context.md` and pauses for your approval.
-4. **Maps the Core Processes:** Walks you through the core workflows your application needs to run. For each workflow, it helps you break the work into discrete handoff-sized stages—defining Entry Criteria, Stage Description, Graduation Criteria, Branching/Terminal Stages (like `Closed Won` / `Closed Lost` or `Approved` / `Rejected`), the System of Record (Repository Markdown vs. External System like Jira/Linear/HubSpot), and the skills that will run each stage. It writes each process to `process/<slug>.md` under `formats/process.md` and updates `process/README.md`.
-5. **Defines the Data Formats and Catalogs:** From the inputs and outputs of your processes, it identifies every document type and shared catalog your application needs, writes their format contracts in `formats/<name>.md`, and updates `formats/README.md`.
-6. **Writes Subtree Agents, Skills, and Verification Rules:** Generates or updates the folder-level `AGENTS.md` files, scaffolds the initial operational skills in `<skills-dir>/` (preserving `improve-process` and `review-question-journal`, and customizing `setup-client` to match your new client/entity formats), updates `scripts/check.py` to enforce every new format contract, runs `python3 scripts/setup-scripts.py --env <vendor>`, verifies that `python3 scripts/check.py` passes with zero errors, and writes a bootstrap summary to `tmp/create-application-report.md`.
+2. **Routes the Request:** If the operator supplied a request, names the `system/` files it changes. A mechanism change is handed to `improve-process`. User and assignment changes are handed to `update-user`.
+3. **Scans When No Request Is Given:** Checks root `AGENTS.md` and the `README.md` and `AGENTS.md` files for `process/`, `formats/`, `.agents/skills/`, `scripts/`, `clients/`, and `system/`, plus every governed file in `system/`. Missing framework files are created in Global Context, Process, Format, Subtree Agent, Skill, then Script order. The root `AGENTS.md` conforms to `formats/system/global-context.md`. Processes conform to `formats/system/process.md`.
+4. **Interviews for External Systems:** Asks which systems agents should coordinate with, such as a tracker, CRM, email system, or calendar, and records them in `system/external-systems.md`.
+5. **Walks Shared Administration:** Walks the operator through the shared installation or administration those systems need before any individual user connects.
+6. **Verifies:** Runs `python3 scripts/setup-scripts.py` and `python3 scripts/check.py`, and writes `tmp/setup-application-report.md`.
 
 ### 6.2. `improve-process` — Turning Operational Friction into Factory Upgrades
 
 No process survives first contact with reality unchanged. As you run your application, you will spot steps where you have to edit an agent's output by hand, fields you forgot to capture, new branching outcomes, or manual stages ready to be automated. Instead of hacking files ad hoc and breaking your contracts, you run `improve-process`.
 
 **How `improve-process` works:**
-1. **Intake and Diagnosis:** Takes your description of what needs to change—whether a bug in how an agent behaved, a new business requirement, or a stage adjustment—and reads the inventories across `AGENTS.md`, `process/README.md`, `formats/README.md`, `<skills-dir>/README.md`, and `scripts/README.md`.
-2. **Top-Down Impact Analysis:** Walks down the strict precedence chain (`Global Context` $\rightarrow$ `Process` $\rightarrow$ `Formats` $\rightarrow$ `Subtree Agents` $\rightarrow$ `Skills` $\rightarrow$ `Scripts` $\rightarrow$ `Existing Data Files`) to identify every mechanism touched by the change:
-   * Does the global scope or a universal `Never` rule in root `AGENTS.md` change?
-   * Which stage, entry/graduation bar, or branch in `process/<slug>.md` changes (requiring a process version bump)?
-   * Does a document need a new section, table column, or vocabulary value in `formats/<name>.md` (requiring a `format_version` bump and migration of existing files)?
-   * Do any subtree `AGENTS.md` files need tighter rules?
-   * Which `SKILL.md` procedures need updated steps, reads, writes, or stopping points?
-   * What new checks must be added to `scripts/check.py`?
-3. **Structured Proposal Gate:** Writes the full impact analysis to `tmp/improve-process-proposal.md` and presents the proposed changes in chat, file by file, waiting for your explicit approval before touching a single governed file.
-4. **Atomic Execution and Verification:** Once you approve, applies the changes in strict dependency order (`Global Context` $\rightarrow$ `Formats` + active file migrations $\rightarrow$ `Process` $\rightarrow$ `Subtree Agents` $\rightarrow$ `Skills` $\rightarrow$ `Scripts` and `README.md` inventories), runs `python3 scripts/setup-scripts.py` and `python3 scripts/check.py`, and stops only when the entire repository is lint-clean.
+1. **Refine the Requirement:** Grills the request until the requirement and acceptance criteria are sufficient to plan. Reads the inventories across `AGENTS.md`, `process/README.md`, `formats/README.md`, `.agents/skills/README.md`, and `scripts/README.md` before asking for a fact the repository already holds.
+2. **Write the Plan and Wait:** Writes an implementation plan that walks Global Context, Processes, Formats, active data, subtree agents, skills, and `scripts/check.py`. Presents the plan and waits for explicit approval before editing a governed file.
+3. **Implement and Review in Parallel:** After approval, one fresh-context subagent writes a review plan from the requirement and the approved plan. At the same time, the implementing agent applies the plan in dependency order, including format version bumps and active-file migration. A final fresh-context subagent runs the review plan and fixes verified gaps. The run ends when `python3 scripts/setup-scripts.py --check` and `python3 scripts/check.py` pass.
 
 ### 6.3. `setup-client` — Onboarding Clients and Entities Without Invention
 
@@ -312,7 +306,7 @@ Whenever your application manages clients, customers, deals, or projects, you ne
 **How `setup-client` works:**
 1. **Pre-Flight Validation:** Takes a path to an upstream `handoff.md` file (and any required commercial contract like `order-form.pdf`) and runs `python3 scripts/check.py --handoff <path>` before writing anything to `clients/`. If the handoff is malformed, it stops and returns the exact errors.
 2. **Mechanical Scaffolding and Setup Ledger:** Creates `clients/<slug>/`, splits the handoff chapters into their format-governed documents (`client.md`, `open-issues.md`, `decision-log.md`, and any domain files your application defines) with standard YAML headers stamped with your operator email, and opens a running **Setup Ledger**. Every section written as `None`, every placeholder value, every conflict between the handoff text and the commercial order form, and every `check.py` warning is added to the Setup Ledger with its `Area`, `Evidence`, and a `Recommended Approach`—never a guessed fact.
-3. **Interactive Ledger Walk:** Walks the Setup Ledger with you in chat, one entry at a time. When you accept a recommendation or supply an answer, the skill writes it into the target document and closes the issue in `open-issues.md`. When you defer an item (because only the client can answer it), the skill ensures an open row exists in `open-issues.md` with a concrete `Next Step`.
+3. **Interactive Ledger Walk:** Walks the Setup Ledger with you in chat, one entry at a time. When you accept a recommendation or supply an answer, the skill writes it into the target document, moves the issue to `# Closed` in `open-issues.md`, and appends the decision to `decision-log.md`. When you defer an item (because only the client can answer it), the skill ensures an open row exists in `open-issues.md` with a concrete `Next Step`.
 4. **Verification and Report:** Runs `python3 scripts/check.py <slug>` after every write, saves the complete ledger record to `tmp/setup-report-<slug>.md` (uncommitted), and stops with a lint-clean client folder ready for commit.
 
 ### 6.4. `review-question-journal` — Turning Questions into Fewer Questions
@@ -326,7 +320,18 @@ Every row in `system/question-journal.md` is a moment where the line stopped and
    * **Prompting change** — The question exposed an ambiguity in the specification the operator supplied. The remedy is a change to how the skill prompts the operator upfront, so the information is collected at the start of the process rather than mid-stage. This is a change to the way specification documents are authored, not to the data the process holds.
 3. **Proposal Gate:** Writes the per-entry analysis and proposed remedy to `tmp/review-question-journal-proposal.md`, presents it in chat, and waits for your explicit approval before anything is changed.
 4. **Hands Off to `improve-process`:** For each approved remedy, invokes `improve-process` to apply the change atomically across the affected process, format, skill, and script files.
-5. **Closes by Change, Never by Answer:** Marks each absorbed entry `Closed` with a reference to the change that absorbed it. An entry is never closed because the question was answered in a session. If a closed question is asked again later, the new row cites the earlier entry, and the recurrence is treated as a defect in the change that was supposed to absorb it.
+5. **Closes by Change, Never by Answer:** Moves each absorbed entry to `# Closed` with the change that absorbed it. An entry is never closed because the question was answered in a session. If a closed question is asked again later, the new row cites the earlier entry, and the recurrence is treated as a defect in the change that was supposed to absorb it.
+
+### 6.5. Shared Application Skills
+
+These skills operate the shared records in `system/` and the client decision path:
+
+* `update-user` adds, edits, or retires a person and coordinates `system/users.md` with `system/client-assignments.md`.
+* `setup-my-integrations` walks one user through connecting their own accounts. It does not repeat the shared administration `setup-application` already completed, and it does not store secrets.
+* `train-me` teaches one user the application scope, their recorded role, the format concepts, the processes, and the operating rules those contracts depend on.
+* `add-to-backlog` records a later application change. `process-backlog` refines one item and hands the plan to `improve-process`.
+* `review-open-issues` walks one client's open issues and, on acceptance, writes the answer and the decision log together.
+* `upgrade-app` compares this repository with the template at `https://github.com/1-to-100/ai-native-app`, writes a step-by-step upgrade plan under `docs/upgrades/`, and reviews the result in a fresh context.
 
 ---
 
@@ -347,32 +352,43 @@ docs/                       General repository documentation not covered elsewhe
 process/                    Stage-by-stage business process definitions
   README.md                 Inventory of processes and shared role vocabulary
   AGENTS.md                 Rules for writing and versioning process documents
-  application-lifecycle.md  Default process governing bootstrap, client setup, and process improvement
+  application-lifecycle.md  Setup, template upgrade, and process improvement
+  client-lifecycle.md       Client onboarding and open-issue review
+  user-administration.md    Users, per-user integrations, and training
+  backlog-management.md     Application backlog capture and handoff to improvement
+  question-review.md        Question-journal review
 formats/                    Format contracts (schemas) for every governed Markdown document
   README.md                 Shared header, body, reference, and naming conventions + format inventory
   AGENTS.md                 Rules for changing formats and bumping format_version atomically
-  global-context.md         Format contract for the root AGENTS.md file
-  process.md                Format contract for stage-by-stage process documents in process/
-  client.md                 Format contract for client/entity profile documents
-  open-issues.md            Format contract for per-client open and closed issue ledgers
-  decision-log.md           Format contract for the per-client central decision log
-  question-journal.md       Format contract for the repository-wide question journal in system/
-  handoff.md                Format contract for incoming onboarding handoff files
+  system/                   Contracts for root context, processes, and system/ records
+  clients/                  Contracts for client records and the onboarding handoff
 clients/                    One isolated subfolder per client or entity (clients/<slug>/)
   README.md                 How client folders are structured and operated
   AGENTS.md                 Tenant isolation and client-folder rules
-system/                     Repository-wide records any agent may append to; not accessible during client-specific work
+system/                     Application-wide shared records
   README.md                 Inventory of system records
-  AGENTS.md                 Access boundary and append-only rules for system/
-  question-journal.md       Every question asked of the operator beyond what a skill requires, and the change that absorbed it
+  AGENTS.md                 Shared-data boundary and append-only rules for system/
+  users.md                  People who use the application, by email, and their primary role
+  user-roles.md             Operational roles, with the processes, skills, and tasks of each role
+  client-assignments.md     Which user acts as which role for which client
+  external-systems.md       External systems and how agents should coordinate with them
+  application-backlog.md    Application changes held for later implementation
+  question-journal.md       Questions asked beyond what a skill requires, and the change that absorbed each one
 archive/                    Retired client folders and retired catalog items (nothing is ever deleted)
   README.md                 Rules and inventory for archived records
-<skills-dir>/               Home for all procedural agent skills (path set by # Target AI Environment; see 7.2)
+.agents/skills/             Source of truth for procedural agent skills
   README.md                 Inventory of all skills (inputs, reads, writes, stopping points)
-  create-application/       Skill: bootstrap and customize this repository for a new AI application
-  improve-process/          Skill: analyze friction or change requests and upgrade mechanisms atomically
-  setup-client/             Skill: onboard a client/entity from a handoff file and walk the Setup Ledger
-  review-question-journal/  Skill: review journaled questions and propose process or prompting changes that absorb them
+  setup-application/        Skill: configure the application, or set it up from scratch when files are missing
+  improve-process/          Skill: refine, plan, implement, and independently review a mechanism change
+  setup-client/             Skill: onboard a client from a handoff file and walk the Setup Ledger
+  review-open-issues/       Skill: resolve one client's open issues into the decision log
+  update-user/              Skill: add, edit, or retire a user and their client assignments
+  setup-my-integrations/    Skill: connect one user's own external-system accounts
+  train-me/                 Skill: teach a user the system, their role, and the operating contracts
+  add-to-backlog/           Skill: capture a later application change
+  process-backlog/          Skill: refine one backlog item and hand it to improve-process
+  review-question-journal/  Skill: turn journaled questions into process or prompting changes
+  upgrade-app/              Skill: bring this repository up to the current template paradigm
 scripts/                    Deterministic verification and environment setup programs
   README.md                 Inventory of scripts and when to run them
   check.py                  Format, process, header, reference, handoff, and staged-diff linter
@@ -381,17 +397,17 @@ tmp/                        Git-ignored working directory for interstitial agent
   .gitkeep                  Keeps the empty tmp/ directory present in every clone
 ```
 
-* **`docs/`** holds general documentation for the repository that does not belong inside a specific process, format, or client folder. In every default repository, `docs/build-any-ai-application.md` lives here so `create-application`, `improve-process`, and human operators always have the governing factory blueprint inside the checkout.
-* **`tmp/`** sits off the root of the repository with all files inside it ignored by Git (`tmp/*` in `.gitignore`, preserving only `tmp/.gitkeep`). Agents use `tmp/` to store interstitial working files—setup reports (`tmp/setup-report-<slug>.md`), change proposals (`tmp/improve-process-proposal.md`, `tmp/review-question-journal-proposal.md`), bootstrap summaries (`tmp/create-application-report.md`), and slide deck sources—so working scratchpads never pollute the permanent record or get committed by accident.
+* **`docs/`** holds general documentation for the repository that does not belong inside a specific process, format, or client folder. In every default repository, `docs/build-any-ai-application.md` lives here so `setup-application`, `improve-process`, and human operators always have the governing factory blueprint inside the checkout. `docs/upgrades/` holds the step-by-step plan produced by `upgrade-app`.
+* **`tmp/`** sits off the root of the repository with all files inside it ignored by Git (`tmp/*` in `.gitignore`, preserving only `tmp/.gitkeep`). Agents use `tmp/` to store interstitial working files—setup reports (`tmp/setup-report-<slug>.md`), change proposals (`tmp/improve-process-proposal.md`, `tmp/review-question-journal-proposal.md`), setup summaries (`tmp/setup-application-report.md`), and slide deck sources—so working scratchpads never pollute the permanent record or get committed by accident.
 
 ### 7.2. Vendor-Optimized Configurations
 
-When `create-application` runs `python3 scripts/setup-scripts.py --env <vendor>`, the repository tailors its skill and context wiring to the chosen AI environment. The `<skills-dir>/` placeholder used throughout this document resolves to the **Skill Discovery Location** for the row matching the `# Target AI Environment` in the root `AGENTS.md`:
+When `setup-application` runs `python3 scripts/setup-scripts.py --env <vendor>`, the repository tailors its skill and context wiring to the chosen AI environment. The `<skills-dir>/` placeholder used throughout this document resolves to the **Skill Discovery Location** for the row matching the `# Target AI Environment` in the root `AGENTS.md`:
 
 | Target AI Environment | Root Context File | Skill Discovery Location (`<skills-dir>/`) | How Operator Invokes a Skill | Native Environment Optimizations |
 | --- | --- | --- | --- | --- |
-| **Claude** (`claude`) | `AGENTS.md` (read natively by Claude Code) | `.claude/skills/<name>` symlinked to `../../.agents/skills/<name>` | `/<skill-name>` (e.g., `/create-application`) | Uses Claude Artifacts for interactive review decks and client approval drafts; uses subagents for isolated research and fresh-context review. |
-| **OpenAI** (`openai`) | `AGENTS.md` (read natively by Codex) | `.agents/skills/<name>/SKILL.md` (native location) | `$<skill-name>` or `@<skill-name>` (e.g., `$create-application`) | Uses Codex terminal execution and sandboxed worktrees for automated verification loops. |
+| **Claude** (`claude`) | `AGENTS.md` (read natively by Claude Code) | `.claude/skills/<name>` symlinked to `../../.agents/skills/<name>` | `/<skill-name>` (e.g., `/setup-application`) | Uses Claude Artifacts for interactive review decks and client approval drafts; uses subagents for isolated research and fresh-context review. |
+| **OpenAI** (`openai`) | `AGENTS.md` (read natively by Codex) | `.agents/skills/<name>/SKILL.md` (native location) | `$<skill-name>` or `@<skill-name>` (e.g., `$setup-application`) | Uses Codex terminal execution and sandboxed worktrees for automated verification loops. |
 | **Gemini** (`gemini`) | `AGENTS.md` plus `GEMINI.md` symlinked to `AGENTS.md` | `.agents/skills/<name>/SKILL.md` and `.gemini/skills/<name>` symlinks | `@<skill-name>` or `/<skill-name>` | Pairs `GEMINI.md` context loading with Gemini CLI commands and Google Workspace handoff flows. |
 
 ### 7.3. The Inventory and Subtree Contract Rule
@@ -400,4 +416,4 @@ Every major directory in the repository (`docs/`, `process/`, `formats/`, `clien
 1. **`README.md` is the inventory.** It lists every file or skill in that directory in a structured table, explaining when to use it and what it governs. Whenever a skill or operator adds, renames, or retires a file in that folder, the folder's `README.md` must be updated in the same commit, and `scripts/check.py` verifies that the inventory and the disk agree.
 2. **`AGENTS.md` is the local contract.** It states the rules an agent must follow when creating or editing files inside that directory.
 
-That is the entire line. Pick your AI environment, run `create-application` to build your stations, bring your work in through `setup-client`, run `improve-process` every time you see friction, and run `review-question-journal` every time an agent had to stop and ask you something. Stop building by hand.
+That is the entire line. Pick your AI environment, run `setup-application` to configure the repository, bring clients in through `setup-client`, run `improve-process` every time you see friction, and run `review-question-journal` every time an agent had to stop and ask you something. Stop building by hand.

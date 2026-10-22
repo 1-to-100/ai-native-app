@@ -1,4 +1,4 @@
-# Format: global-context (version 1)
+# Format: system/global-context (version 2)
 
 ## Purpose
 
@@ -10,7 +10,7 @@ Defines the structure of the root `AGENTS.md` file, which sets the global busine
 
 ## Header
 
-No YAML front matter. The first line is `# AGENTS.md — global context (version N)`, where `N` is a positive integer.
+No YAML front matter. The first line is `# AGENTS.md — global context (version N)`, where `N` matches the version in this format's title line.
 
 ## Body
 
@@ -30,26 +30,27 @@ A bullet list of upstream, downstream, or external activities that do not belong
 The single AI environment this repository is optimized for, written as a Display Name from Vendors (`Claude`, `OpenAI`, or `Gemini`).
 
 ## Skill Invocation
-How the operator invokes skills in the chosen environment (e.g., `/<skill-name>` in Claude Code, `$<skill-name>` in OpenAI Codex, `@<skill-name>` in Gemini) and how `scripts/setup-scripts.py` wires them.
+How the operator invokes skills in the chosen environment (for example, `/<skill-name>` in Claude Code, `$<skill-name>` in OpenAI Codex, `@<skill-name>` in Gemini) and how `scripts/setup-scripts.py` wires them.
 
 ## Native Capabilities
-How this application leverages the chosen vendor's native features (such as Claude Artifacts, subagents, Codex terminal sandboxes, or Gemini Workspace integrations).
+How this application uses the chosen vendor's native features (such as Claude Artifacts, subagents, Codex terminal sandboxes, or Gemini Workspace integrations).
 
 # Before You Act
-A numbered list giving the exact reading order an agent must follow before executing work (`process/README.md` -> `.agents/skills/README.md` -> `formats/README.md` -> `scripts/README.md` -> `docs/build-any-ai-application.md` when bootstrapping or evolving the system).
+A numbered list giving the exact reading order an agent must follow before executing work (`process/README.md`, then `.agents/skills/README.md`, then `formats/README.md`, then the nearest subtree `AGENTS.md`, then `scripts/README.md`, and `docs/build-any-ai-application.md` when bootstrapping or evolving the system).
 
 # Every File
-A bullet list of universal file, header, attribution, sentinel (`None`), reference, `tmp/`, and format-precedence rules that apply to every file in the repository.
+A bullet list of universal file, header, attribution, sentinel (`None`), reference, `tmp/`, and format-precedence rules that apply to every file in the repository. It distinguishes system records under `system/` from client records under `clients/<slug>/`.
 
 # Never
-A flat bullet list of systemic invariants that no agent or operator may ever violate (no deleting records, no rewriting history tables, no inventing facts/quotes/terms, no storing secrets or payment details, no cross-client references).
+A flat bullet list of systemic invariants that no agent or operator may ever violate (no deleting records, no rewriting history tables, no inventing facts, quotes, or terms, no storing secrets or payment details, no cross-client comparisons, and no client business facts in `system/`).
 ```
 
 ## Rules
 
 - There is exactly one root `AGENTS.md` file in the repository.
-- When `create-application` interviews the founder, it writes this file first before creating or updating processes, formats, skills, or scripts.
-- Nested `<directory>/AGENTS.md` files may add stricter rules for their directory; they never relax or contradict the root `AGENTS.md`.
+- When `setup-application` interviews the operator, it writes or completes this file before creating or updating processes, formats, skills, or scripts.
+- Nested `<directory>/AGENTS.md` files may add stricter rules for their directory. They never relax or contradict the root `AGENTS.md`.
+- The version in the root file's first line changes only when this format's version changes.
 
 ## Vocabularies
 
@@ -63,7 +64,7 @@ Vendors:
 
 ## Checks
 
-- First line matches `# AGENTS.md — global context (version N)`.
+- First line matches `# AGENTS.md — global context (version N)`, where `N` is this format's version.
 - All six `#` sections (`# Application Overview`, `# Scope and Out of Scope`, `# Target AI Environment`, `# Before You Act`, `# Every File`, `# Never`) are present in exact order.
 - `# Scope and Out of Scope` contains `## In Scope` and `## Out of Scope`.
 - `# Target AI Environment` contains `## Vendor`, `## Skill Invocation`, and `## Native Capabilities`, and `## Vendor` is a valid Display Name from Vendors.

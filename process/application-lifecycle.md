@@ -1,103 +1,105 @@
-# Process: application-lifecycle (version 1)
+# Process: application-lifecycle (version 2)
 
 # Purpose
-Governs how an operator takes this base repository, bootstraps it into a domain-specific AI-native application optimized for a single AI vendor, onboards clients or entities into structured Markdown records, and continuously upgrades the factory line as recurring manual edits or process changes arise.
+Governs how an operator configures this repository, upgrades it to the current template application paradigm, and changes its mechanisms when operational friction or a new requirement appears.
 
 # Scope
-Covers the complete lifecycle of the application infrastructure itself: initial repository customization (`Stage 1`), entity onboarding into `clients/<slug>/` (`Stage 2`), and coordinated mechanism upgrades across `AGENTS.md`, `process/`, `formats/`, `.agents/skills/`, and `scripts/` (`Stage 3`). Domain-specific operational processes created during `Stage 1` are governed by their own files in `process/`.
+Covers application setup and configuration in `system/` and the framework contracts, upgrades pulled from the template repository, and coordinated mechanism changes across `AGENTS.md`, `process/`, `formats/`, `.agents/skills/`, and `scripts/`. Client onboarding is governed by `client-lifecycle`. Domain workflows created during setup are governed by their own files in `process/`.
 
 # Roles
-- Operator: Owns the business intent, answers the `create-application` interview, walks the `setup-client` ledger, approves `improve-process` proposals, and commits changes under their email.
-- Client: Supplies upstream onboarding facts, signed commercial agreements, and answers to deferred open issues.
-- Agent: Executes `create-application`, `setup-client`, and `improve-process` inside the repository contracts.
+- Operator: Supplies configuration answers, approves setup and improvement gates, and commits changes under their email.
+- Reviewer: Inspects an upgrade or improvement in a fresh context against the approved plan.
+- Agent: Executes `setup-application`, `upgrade-app`, and `improve-process` inside the repository contracts.
 
 # Cadence
-- Stage 1 runs once when bootstrapping a new AI application from this base template.
-- Stage 2 runs once per new or migrating client/entity whenever a handoff file is ready.
-- Stage 3 runs continuously whenever the Operator identifies a recurring manual correction, a process defect, or a new business requirement.
+- Stage 1 runs when the operator invokes setup with a configuration request, and when setup is invoked with no request so the reserved framework files and `system/` records can be completed.
+- Stage 2 runs when the operator asks to upgrade this repository to the current template paradigm.
+- Stage 3 runs whenever the operator identifies a recurring manual correction, a process defect, or a new application requirement.
 
 # System of Record
 ## Mode
 Repository Markdown
 
 ## Location
-Root `AGENTS.md` (`formats/global-context.md`), `process/*.md` (`formats/process.md`), `formats/*.md`, `.agents/skills/*/SKILL.md`, `clients/<slug>/` (`formats/client.md`, `formats/open-issues.md`), and `tmp/` for uncommitted interstitial reports.
+Root `AGENTS.md` (`system/global-context`), `process/*.md` (`system/process`), `formats/system/` and `formats/clients/`, `system/` (`system/users`, `system/user-roles`, `system/client-assignments`, `system/external-systems`, `system/application-backlog`, `system/question-journal`), `.agents/skills/*/SKILL.md`, and `docs/upgrades/` for an upgrade plan. Interstitial reports stay in `tmp/`.
 
 # Inputs
-- `docs/build-any-ai-application.md` (the governing factory blueprint).
-- Operator's business domain knowledge, chosen AI vendor (`Claude`, `OpenAI`, or `Gemini`), and operator email address.
-- For Stage 2: an onboarding handoff file conforming to `formats/handoff.md` and any signed `order-form.pdf`.
-- For Stage 3: an operator change request or observed friction point from running an operational stage.
+- `docs/build-any-ai-application.md`.
+- The operator's configuration request, or no request when a completeness scan is required.
+- For Stage 2, network access to `https://github.com/1-to-100/ai-native-app` and a worktree that can accept the upgrade.
+- For Stage 3, an operator change request or a backlog item handed over by `process-backlog`.
 
 # Stages
-## Stage 1: Application Bootstrap
+## Stage 1: Application Setup
 ### Entry Criteria
-A clean clone of the base `ai-native-app` repository, the blueprint at `docs/build-any-ai-application.md`, and an Operator ready to define the application's scope, target AI environment, processes, and data formats.
+The operator invokes `setup-application` with a configuration request, or with no request. The blueprint at `docs/build-any-ai-application.md` is readable.
 
 ### Description
-The Operator invokes `create-application`. The Agent asks which AI vendor environment to optimize for (`Claude`, `OpenAI`, or `Gemini`), interviews the Operator to write the Global Context in the root `AGENTS.md`, maps each core business workflow into a stage-by-stage process file in `process/`, defines the required document schemas in `formats/`, writes subtree `AGENTS.md` files and initial operational skills in `.agents/skills/`, updates `scripts/check.py`, and wires the environment with `scripts/setup-scripts.py`.
+The Agent determines which `system/` records the request changes and interviews the operator for those records. With no request, the Agent scans `system/` and the reserved framework files (root `AGENTS.md` and the `README.md` and `AGENTS.md` files for `process/`, `formats/`, `.agents/skills/`, `scripts/`, `clients/`, and `system/`), checks each governed file against its format, and interviews the operator until required setup is complete. Missing framework files are created in Global Context, Process, Format, Subtree Agent, Skill, then Script order. The Agent also interviews for external systems and walks through the shared administration those systems need.
 
 ### Graduation Criteria
-Root `AGENTS.md`, `process/`, `formats/`, `.agents/skills/`, and `scripts/check.py` are written and approved by the Operator; `python3 scripts/setup-scripts.py --check` and `python3 scripts/check.py` both exit with zero errors; and `tmp/create-application-report.md` is written.
+Every required framework file exists, every `system/` registry is either filled from the operator's answers or explicitly confirmed empty, external-system administration steps the operator chose to complete are recorded, and `python3 scripts/setup-scripts.py --check` and `python3 scripts/check.py` exit with zero errors.
 
 ### Branching and Terminal Paths
-- **Approved and Lint-Clean:** Advances to live operation (`Stage 2` for entity onboarding and domain processes in `process/`).
-- **Revision Needed:** If the Operator rejects part of the proposed processes or formats during the interview gates, `create-application` revises the affected mechanism before moving down the creation order.
-- **Aborted:** If the Operator cancels before completion, no partial unlinted changes are committed.
+- **Configured:** Advances to live operation. Client onboarding continues in `client-lifecycle`.
+- **Mechanism Change:** A request that changes a process, format, skill, or checker is handed to Stage 3 instead of being patched inside setup.
+- **Revision Needed:** The operator rejects part of a proposed global context, process, or format. Setup revises that mechanism before continuing down the creation order.
+- **Aborted:** The operator cancels before completion. No partial unlinted change is committed.
 
 ### Implementing Skills
-`create-application`
+`setup-application`
 
-## Stage 2: Client and Entity Onboarding
+## Stage 2: Template Upgrade
 ### Entry Criteria
-Stage 1 is complete (or the base formats are in force), and a handoff file in `formats/handoff.md` format (plus any sibling asset folder and redacted `order-form.pdf`) has been supplied for a client slug that does not yet exist in `clients/` or `archive/`.
+The operator invokes `upgrade-app`. The worktree has no unrelated uncommitted changes, and `https://github.com/1-to-100/ai-native-app` is reachable.
 
 ### Description
-The Operator invokes `setup-client <path-to-handoff.md>`. The Agent validates the handoff with `python3 scripts/check.py --handoff <path>`, scaffolds `clients/<slug>/`, splits each handoff chapter into its governed document (`client.md`, `open-issues.md`, and domain files), reconciles commercial entitlements against `order-form.pdf`, and records every `None` field, placeholder, or discrepancy on the Setup Ledger with `Evidence` and a `Recommended Approach`. The Agent then walks the Setup Ledger entry by entry with the Operator, writing accepted answers into target documents and opening rows in `open-issues.md` for deferred items.
+The Agent clones the template application to a temporary directory, reads its `docs/build-any-ai-application.md` and the template files that process names, and writes a step-by-step upgrade plan under `docs/upgrades/`. One subagent executes that plan. A second subagent writes a review plan. A final subagent runs the review plan and fixes gaps.
 
 ### Graduation Criteria
-Every Setup Ledger entry is either answered in its target document (with its issue moved to `# Closed`) or recorded as an `# Open` row in `clients/<slug>/open-issues.md` with a `Next Step`; `clients/README.md` includes the client; `python3 scripts/check.py <slug>` passes with zero errors; and `tmp/setup-report-<slug>.md` is written.
+The upgrade plan is in `docs/upgrades/`, the review subagent reports no remaining gaps, and `python3 scripts/setup-scripts.py --check` and `python3 scripts/check.py` exit with zero errors.
 
 ### Branching and Terminal Paths
-- **Onboarded (Active):** The client folder is lint-clean and enters the application's recurring operational processes.
-- **Handoff Rejected (Returned Upstream):** If `python3 scripts/check.py --handoff <path>` fails with errors, `setup-client` halts before creating `clients/<slug>/` and returns the findings to the upstream handoff author.
-- **Retired (`Archived`):** When an active client later offboards or terminates, their folder is moved to `archive/<slug>/` with an `ARCHIVED.md` note and `clients/README.md` and `archive/README.md` are updated.
+- **Upgraded:** The operator is told the upgrade is complete and reviews the diff before commit.
+- **Blocked:** Unrelated uncommitted work or an unreachable template URL stops the stage before any upgrade edit.
+- **Review Failed:** The final review subagent could not make the repository match the upgrade plan. The stage stops with the findings still open.
 
 ### Implementing Skills
-`setup-client`
+`upgrade-app`
 
 ## Stage 3: Continuous Process Improvement
 ### Entry Criteria
-The Operator observes a recurring manual correction, a process bottleneck, a missing data field, or a new business rule while running the application, and invokes `improve-process` with the change request.
+The operator invokes `improve-process` with a change request, or `process-backlog` hands over one backlog item whose requirement and plan are ready for implementation.
 
 ### Description
-The Agent diagnoses the request against the precedence hierarchy defined in `docs/build-any-ai-application.md` (`Global Context` -> `Process` -> `Formats` -> `Subtree Agents` -> `Skills` -> `Scripts` -> active data files). It writes a complete impact analysis and change proposal to `tmp/improve-process-proposal.md` and presents it to the Operator for review. On explicit Operator approval, it updates all affected files in dependency order, bumps version numbers on modified processes and formats, migrates active documents to the new `format_version`, updates directory `README.md` inventories, and updates `scripts/check.py`.
+The Agent grills the request until the requirement and acceptance criteria are sufficient, writes an implementation plan, and waits for explicit operator approval. After approval, an independent subagent writes a review plan while the implementing agent applies the plan. A final fresh-context subagent runs the review plan and fixes verified gaps. Format changes migrate active documents in the same change.
 
 ### Graduation Criteria
-The Operator explicitly approves the proposal; all affected mechanisms, active documents, and inventories are updated atomically; and `python3 scripts/setup-scripts.py --check` and `python3 scripts/check.py` pass with zero errors.
+The operator approved the plan, the final review subagent finished, affected mechanisms and active documents agree, and `python3 scripts/setup-scripts.py --check` and `python3 scripts/check.py` exit with zero errors.
 
 ### Branching and Terminal Paths
-- **Accepted and Applied:** Changes are verified and committed to the repository, becoming the new standard for the next run.
-- **Proposal Revised:** The Operator modifies the scope or design at the proposal gate; `improve-process` updates `tmp/improve-process-proposal.md` and re-presents before editing any governed file.
-- **Proposal Rejected (`Cancelled`):** The Operator declines the change; governed repository files remain untouched.
+- **Accepted and Applied:** The working tree is ready for the operator to review and commit.
+- **Plan Revised:** The operator changes the plan at the approval gate. Implementation does not start until the revised plan is approved.
+- **Proposal Rejected (`Cancelled`):** The operator declines the plan. Governed files stay as they were before this stage.
 
 ### Implementing Skills
 `improve-process`
 
 # Outputs
-- Tailored Global Context (`AGENTS.md`), domain processes (`process/*.md`), format contracts (`formats/*.md`), skills (`.agents/skills/*/SKILL.md`), and verification rules (`scripts/check.py`).
-- Lint-clean client folders under `clients/<slug>/` with tracked open issues in `clients/<slug>/open-issues.md`.
-- Uncommitted interstitial reports in `tmp/` (`tmp/create-application-report.md`, `tmp/setup-report-<slug>.md`, `tmp/improve-process-proposal.md`).
+- Configured system records and framework contracts, or a lint-clean mechanism change.
+- An upgrade plan in `docs/upgrades/` when Stage 2 runs.
+- Uncommitted interstitial reports in `tmp/`.
 
 # Rules
-- Follow the creation and precedence order strictly: Global Context (`AGENTS.md`) -> Process (`process/`) -> Formats (`formats/`) -> Subtree Agents (`<dir>/AGENTS.md`) -> Skills (`.agents/skills/`) -> Scripts (`scripts/`) -> Client/Catalog Data (`clients/`).
-- Never create a client folder outside `setup-client`.
-- Never modify a format contract without bumping `format_version`, migrating active files, and updating `scripts/check.py` in the same commit.
-- Never write interstitial proposals or setup reports outside `tmp/`.
+- Follow creation and precedence order when building missing framework files: Global Context, Process, Formats, Subtree Agents, Skills, Scripts, then system and client data.
+- A system-data edit that does not change a mechanism stays in Stage 1. A mechanism change goes to Stage 3.
+- Never modify a format contract without bumping `format_version`, migrating active files, and updating `scripts/check.py` in the same change.
+- Never write interstitial proposals or setup reports outside `tmp/`. Upgrade plans are the exception and belong in `docs/upgrades/`.
 
 # Related
 - Blueprint: `docs/build-any-ai-application.md`.
-- Formats: `formats/global-context.md`, `formats/process.md`, `formats/client.md`, `formats/open-issues.md`, `formats/handoff.md`.
-- Skills: `create-application`, `setup-client`, `improve-process`.
+- Formats: `system/global-context`, `system/process`, and the `system/` record formats.
+- Skills: `setup-application`, `upgrade-app`, `improve-process`.
+- Processes: `client-lifecycle`, `user-administration`, `backlog-management`, `question-review`.
 - Scripts: `scripts/check.py`, `scripts/setup-scripts.py`.
-- Gaps: None in the base lifecycle; domain-specific processes are added by `create-application`.
+- Gaps: None.

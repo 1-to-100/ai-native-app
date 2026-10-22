@@ -1,16 +1,16 @@
-# Format: client (version 1)
+# Format: clients/client (version 2)
 
 ## Purpose
 
-The authoritative record for one client or primary business entity in the application: who they are, the business context every workflow for them is grounded in, and their commercial entitlements. It is the first file an agent reads in `clients/<slug>/`, and no other document in the folder restates its values.
+The authoritative record for one client or primary business entity: who they are, the business context every workflow for them is grounded in, and their commercial entitlements. It is the first file an agent reads in `clients/<slug>/`, and no other document in the folder restates its values.
 
 ## Location
 
-`clients/<slug>/client.md`
+`clients/<slug>/client.md`. The format identifier is `clients/client`.
 
 ## Header
 
-The standard YAML header defined in `formats/README.md` with `format: client`, `format_version: 1`, and `client: <slug>`.
+The client header defined in `formats/README.md` with `format: clients/client`, `format_version: 2`, and `client` equal to the folder slug.
 
 ## Body
 
@@ -69,19 +69,19 @@ Commercial overrides, approval rules, exclusions, and anything negotiated for th
 ## Rules
 
 - `client.md` is the single authority for client identity and entitlements inside `clients/<slug>/`.
-- Contact details appear only here (and on `order-form.pdf` if present), never in other documents.
+- Contact details appear only here and on `order-form.pdf` if present, never in other documents.
 - Payment card or bank numbers must never appear in `client.md` or `order-form.pdf`.
 - Any section left `None` during onboarding must have a matching open row in `clients/<slug>/open-issues.md`.
-- `create-application` and `improve-process` may extend this format with domain-specific sections by bumping `format_version` and updating `scripts/check.py`.
+- `setup-application` and `improve-process` may extend this format with domain-specific sections by bumping `format_version` and updating `scripts/check.py`.
 
 ## Vocabularies
 
-None in the base format; domain-specific vocabularies are added when `create-application` customizes the repository.
+None in the base format. Domain-specific vocabularies are added when `setup-application` customizes the repository.
 
 ## Checks
 
-- Standard header with `format: client`, `format_version: 1`, and `client` matching the parent folder name.
+- Client header with `format: clients/client`, `format_version: 2`, and `client` matching the parent folder name.
 - All six `#` sections (`# General Information`, `# Business Overview`, `# Business Problem`, `# Solution`, `# Entitlements`, `# Notes`) and their `##` subsections are present in exact order.
 - `## Contact` holds two bullets (`- Name: ...` and `- Email: ...`) with a valid email address, or `None` when tracked as an open issue.
-- `## Engagement Started` and `## Renews` are `YYYY-MM-DD` or `None`; `## Starts` is `YYYY-MM` or `None`.
+- `## Engagement Started` and `## Renews` are `YYYY-MM-DD` or `None`. `## Starts` is `YYYY-MM` or `None`.
 - If `## Order Form` is `order-form.pdf`, that file exists in `clients/<slug>/order-form.pdf`.
