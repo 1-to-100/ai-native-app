@@ -9,7 +9,7 @@ Read [`docs/build-any-ai-application.md`](docs/build-any-ai-application.md) for 
 ```text
 AGENTS.md            the Global Context and repository contract (read first)
 docs/                general repository documentation, including build-any-ai-application.md; README.md is the inventory
-process/             the governing stage-by-stage processes; README.md is the inventory
+process/             domain workflows added for this business; shipped skills carry their own stage rules; README.md is the inventory
 formats/             format contracts split into system/ and clients/; README.md holds shared conventions and the inventory
 system/              application-wide shared records (users, roles, assignments, external systems, backlog, question journal)
 clients/<slug>/      one isolated folder per client or entity

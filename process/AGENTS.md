@@ -1,6 +1,6 @@
 # AGENTS.md — process/
 
-The files here are the governing processes for the business scope of this repository. Every process document must conform to `formats/system/process.md`.
+The files here are domain processes added for this business. The skills that ship with the template do not have process documents in this directory; their stage rules live in the skill. Every process document that is added must conform to `formats/system/process.md`.
 
 - A process is prose, stage definitions, and tables. It carries no YAML front matter. Its first line is `# Process: <slug> (version N)`, and it follows the exact section order in `formats/system/process.md`.
 - Every workflow is decomposed into discrete stages (`## Stage 1: ...`, `## Stage 2: ...`), each small enough to hand off between sessions and each declaring `### Entry Criteria`, `### Description`, `### Graduation Criteria`, `### Branching and Terminal Paths`, and `### Implementing Skills`.

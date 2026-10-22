@@ -9,6 +9,8 @@ Read this before running a script. `check.py` only reports and never edits a doc
 
 Requirements: Python 3.9 or later, standard library only.
 
+Regression tests for `check.py` live in `scripts/tests/` and are not inventory scripts. Run them with `python3 -m unittest scripts/tests/test_check.py`.
+
 ## When to run
 
 - At the end of every skill, as each `SKILL.md` specifies.

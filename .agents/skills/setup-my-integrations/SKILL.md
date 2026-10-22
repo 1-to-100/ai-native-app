@@ -9,6 +9,15 @@ description: Walk one user through connecting their own external-system accounts
 
 Use this skill when one person needs to connect the external systems this application already lists. This is that person's own accounts and permissions in the agent environment. Shared installation and workspace administration belong to `setup-application`.
 
+## Boundaries
+
+- **Entry.** `system/external-systems.md` lists the systems the user should connect, shared `## System Administration` for each `Active` system is complete enough to follow, and the operator invokes this skill for one user email.
+- **Graduation.** `tmp/setup-my-integrations-<user>.md` lists every applicable system and the non-secret outcome of its connection step. No credential was written to the repository.
+- **Connected.** The user finished the connection steps they chose to finish.
+- **Skipped.** The user skips a system. The report says so, and the system record is unchanged.
+- **Blocked.** A system still needs shared administration. Send that system back to `setup-application` and do not invent a connection.
+- **No systems.** `system/external-systems.md` is `None` or has no `Active` system. Stop after saying there is nothing to connect.
+
 ## Inputs
 
 - The user email. Ask if it was not supplied, and list emails from `system/users.md` rather than guessing.
@@ -17,7 +26,6 @@ Use this skill when one person needs to connect the external systems this applic
 
 ## Reads
 
-- `process/user-administration.md` Stage 2.
 - `formats/system/external-systems.md` and `system/external-systems.md`.
 - `system/users.md`, to confirm the person exists and is `Active`.
 - `system/AGENTS.md`.

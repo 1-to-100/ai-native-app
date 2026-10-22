@@ -28,7 +28,7 @@ Invoke skills in Claude Code as `/<skill-name>` (exposed via `.claude/skills/<sk
 Optimized for Claude Code slash commands, fresh-context subagents for verification and research, and Claude Artifacts when generating client-facing decks or review drafts from repository data.
 
 # Before You Act
-1. Read `process/README.md` to see which process governs the work, and read the process document itself in `process/` for its stages, entry criteria, graduation criteria, branching paths, and where a stage stops.
+1. Read `process/README.md`. When a domain process in `process/` governs the work, read that document for its stages, entry criteria, graduation criteria, branching paths, and where a stage stops. The skills that ship with this template carry those rules themselves.
 2. Read `.agents/skills/README.md` to see the inventory of skills before executing one. If a skill covers the stage, invoke it by name (`/setup-application`, `/setup-client`, `/improve-process`) rather than improvising the procedure by hand.
 3. Read `formats/README.md` and the governing format contract in `formats/system/` or `formats/clients/` for every document you will write or edit. The format contract is the single source of truth for that document's header, sections, and vocabularies.
 4. Read the nearest subtree `AGENTS.md` before editing files in that directory. During client-specific work, follow `system/AGENTS.md`: read users, roles, external-system guidance, and the assignment rows for the client being served.

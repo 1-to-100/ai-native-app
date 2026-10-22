@@ -166,7 +166,7 @@ In our framework, the root `AGENTS.md` is governed by `formats/system/global-con
 2. **`# Scope and Out of Scope`** — Two explicit subsections (`## In Scope` and `## Out of Scope`) drawing a hard boundary around what belongs in this repository versus what happens upstream, downstream, or in external systems.
 3. **`# Target AI Environment`** — Names the single AI vendor environment this repository is optimized for (`Claude`, `OpenAI`, or `Gemini`), how skills are invoked in that environment, and which native capabilities (like Claude Artifacts, Codex terminal workflows, or Gemini workspace tools) the application uses. This choice also fixes the skills directory. This document writes that directory as the placeholder `<skills-dir>/`; the final path is resolved per target AI environment in the table in Section 7.2.
 4. **`# Before You Act`** — The mandatory reading sequence every agent follows before touching a file:
-   1. Read `process/README.md` and the governing process document in `process/`.
+   1. Read `process/README.md`. Read a process document in `process/` when one governs the work. The skills that ship with the template carry their own stage rules.
    2. Read `<skills-dir>/README.md` and invoke the matching skill by name rather than improvising.
    3. Read `formats/README.md` and the governing format contract in `formats/` before writing or editing any document.
    4. Read `scripts/README.md` before running verification scripts.
@@ -175,7 +175,7 @@ In our framework, the root `AGENTS.md` is governed by `formats/system/global-con
 
 ### 5.3. Process Definitions (`process/` and `formats/system/process.md`)
 
-Before you design a database table or write an agent prompt, you have to define how the work actually moves through your business. That is what `process/` holds. Every workflow gets its own file in `process/<slug>.md`, governed by the default process format at `formats/system/process.md` and indexed in `process/README.md`.
+Before you design a database table or write an agent prompt, you have to define how the work actually moves through your business. The skills that ship with this template already carry that definition for setup, upgrade, improvement, client onboarding, issue review, users, integrations, training, the backlog, and the question journal. A workflow added for the business gets its own file in `process/<slug>.md`, governed by the default process format at `formats/system/process.md` and indexed in `process/README.md`.
 
 Every process document follows a strict, machine-checked structure built around discrete, handoff-sized stages:
 
@@ -349,14 +349,9 @@ docs/                       General repository documentation not covered elsewhe
   README.md                 Inventory of docs/
   AGENTS.md                 Rules for docs/
   build-any-ai-application.md  This master governing blueprint
-process/                    Stage-by-stage business process definitions
+process/                    Domain workflows added for this business
   README.md                 Inventory of processes and shared role vocabulary
   AGENTS.md                 Rules for writing and versioning process documents
-  application-lifecycle.md  Setup, template upgrade, and process improvement
-  client-lifecycle.md       Client onboarding and open-issue review
-  user-administration.md    Users, per-user integrations, and training
-  backlog-management.md     Application backlog capture and handoff to improvement
-  question-review.md        Question-journal review
 formats/                    Format contracts (schemas) for every governed Markdown document
   README.md                 Shared header, body, reference, and naming conventions + format inventory
   AGENTS.md                 Rules for changing formats and bumping format_version atomically
@@ -391,8 +386,10 @@ archive/                    Retired client folders and retired catalog items (no
   upgrade-app/              Skill: bring this repository up to the current template paradigm
 scripts/                    Deterministic verification and environment setup programs
   README.md                 Inventory of scripts and when to run them
+  AGENTS.md                 Rules for scripts/
   check.py                  Format, process, header, reference, handoff, and staged-diff linter
   setup-scripts.py          Configures and checks skill exposure for Claude, OpenAI, or Gemini
+  tests/                    Regression tests for the scripts; not an inventoried script
 tmp/                        Git-ignored working directory for interstitial agent files, drafts, and reports
   .gitkeep                  Keeps the empty tmp/ directory present in every clone
 ```

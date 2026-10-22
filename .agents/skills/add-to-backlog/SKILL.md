@@ -9,6 +9,18 @@ description: Add one application feature request or issue to system/application-
 
 Use this skill when the operator wants to keep an application change or enhancement for later. Use `review-open-issues` when the item is a missing or disputed fact about one client. Use `improve-process` when the operator wants the change implemented now.
 
+## Boundaries
+
+This skill covers `system/application-backlog.md` only. Refining and handing one item to `improve-process` is `process-backlog`.
+
+- **Entry.** The operator invokes this skill with a request, or is ready to state one. The request is an application change, not a missing fact about one client.
+- **Graduation.** A new `Proposed` row exists, its heading has never been used, and `python3 scripts/check.py` passes with zero errors.
+- **Captured.** The row is `Proposed` and the skill ends.
+- **Client fact.** The request is a missing or disputed fact about one client. Stop and point the operator to `review-open-issues` for that client.
+- **Implement now.** The operator decides not to wait. Stop and point the operator to `improve-process` with the same request.
+- Never delete a backlog row or reuse an `APP-NNNN` heading.
+- Never implement the change in this skill.
+
 ## Inputs
 
 - The feature request or issue, in the operator's words.
@@ -17,7 +29,6 @@ Use this skill when the operator wants to keep an application change or enhancem
 
 ## Reads
 
-- `process/backlog-management.md` Stage 1.
 - `formats/system/application-backlog.md` and `system/application-backlog.md`.
 - `system/AGENTS.md`.
 

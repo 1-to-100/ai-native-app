@@ -1,29 +1,25 @@
 # Processes — inventory
 
-The governing process documents for this repository. Every process is broken into discrete, handoff-sized stages governed by `formats/system/process.md`: each stage declares its entry criteria, description, graduation criteria, branching or terminal paths, and the skill or skills that execute it. Read the process before running any skill it names. The rules for this directory live in `process/AGENTS.md`.
+Domain workflows for this repository. The skills that ship with the template carry their own entry criteria, graduation criteria, and branches, and they do not have process documents here. A workflow added for the business gets `process/<slug>.md`, governed by `formats/system/process.md`. The rules for this directory live in `process/AGENTS.md`.
 
 ## The processes
 
 | Process | Governs | Cadence | System of Record | Runs on |
 | --- | --- | --- | --- | --- |
-| [`application-lifecycle.md`](application-lifecycle.md) | Configuring this repository, upgrading it to the current template paradigm, and evolving its mechanisms | On operator request for setup or upgrade, and continuously for improvement | `Repository Markdown` | `setup-application`, `upgrade-app`, `improve-process` |
-| [`client-lifecycle.md`](client-lifecycle.md) | Onboarding a client and resolving that client's open issues into the decision log | Once per new client, then whenever open issues are reviewed | `Repository Markdown` | `setup-client`, `review-open-issues` |
-| [`user-administration.md`](user-administration.md) | Maintaining users and role assignments, connecting a user's integrations, and teaching a user the application | When users, connections, or training are requested | `Repository Markdown` | `update-user`, `setup-my-integrations`, `train-me` |
-| [`backlog-management.md`](backlog-management.md) | Capturing later application changes and refining one backlog item until `improve-process` can implement it | Whenever a future change is captured or a backlog item is selected | `Repository Markdown` | `add-to-backlog`, `process-backlog` |
-| [`question-review.md`](question-review.md) | Turning questions an agent had to ask into process or prompting changes | When the question journal has open rows | `Repository Markdown` | `review-question-journal` |
+| None | — | — | — | — |
 
 ## Where a process sits
 
 ```text
 AGENTS.md        the Global Context and universal boundaries (highest authority)
-process/         how the business runs stage by stage        (who, when, entry/graduation criteria, branches)
+process/         domain workflows added for this business     (who, when, entry/graduation criteria, branches)
 formats/         what each document holds                    (the format wins on document structure)
 system/          application-wide shared records             (users, roles, assignments, integrations, backlog, journal)
-.agents/skills/  how an agent executes one stage             (the procedure)
+.agents/skills/  how an agent executes the work              (shipped skills include their own stage rules)
 scripts/         what is enforced mechanically               (the lint)
 ```
 
-A process names the skill that executes each stage and the format each written outcome lands in. A stage without a skill is marked `Manual (Gap)` under `### Implementing Skills` so the gap is explicit.
+A domain process names the skill that executes each stage and the format each written outcome lands in. A stage without a skill is marked `Manual (Gap)` under `### Implementing Skills` so the gap is explicit.
 
 ## Shape of a process
 
@@ -42,7 +38,7 @@ Every process document in this directory conforms to [`formats/system/process.md
 
 ## Roles
 
-The base role vocabulary every process uses. `system/user-roles.md` records operational roles for agent context and does not replace this vocabulary. `setup-application` and `improve-process` add domain-specific process roles here when a process needs them.
+The base role vocabulary a domain process uses. `system/user-roles.md` records operational roles for agent context and does not replace this vocabulary. `setup-application` and `improve-process` add domain-specific process roles here when a process needs them.
 
 | Role | In a process |
 | --- | --- |

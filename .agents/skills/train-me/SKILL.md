@@ -9,6 +9,14 @@ description: Teach one recorded user the application scope, their role, the form
 
 Use this skill when a person wants to learn how this application works, or when an operator asks to train a named user. The teaching is specific to the role and client assignments recorded for that person.
 
+## Boundaries
+
+- **Entry.** The user exists in `system/users.md`, and the operator invokes this skill for that user's email. `update-user` has recorded the primary role. Client assignments may be `None`.
+- **Graduation.** The user has acknowledged every required topic or has stopped at a named topic. `tmp/train-me-<user>.md` records the topics covered and the acknowledgements. No governed file is changed unless the user discovered a defect, which is handed to `review-question-journal` or `add-to-backlog`.
+- **Completed.** Every required topic was acknowledged.
+- **Stopped.** The user stops early. The report names the last completed topic.
+- **Unknown user.** The email is not in `system/users.md`. Stop and point the operator to `update-user`.
+
 ## Inputs
 
 - The learner's email address. If it is omitted, list the `Active` emails in `system/users.md` and ask the operator to pick one.
@@ -16,7 +24,6 @@ Use this skill when a person wants to learn how this application works, or when 
 
 ## Reads
 
-- `process/user-administration.md` Stage 3.
 - Root `AGENTS.md` and `docs/build-any-ai-application.md`.
 - `system/users.md`, `system/user-roles.md`, and the learner's rows in `system/client-assignments.md`.
 - `formats/README.md` and the format contracts those roles use.
@@ -30,7 +37,7 @@ Teach the topics below in order. For each topic, explain it from the files you r
 1. **Scope.** What this repository is for, what is in scope, and what is out of scope, from root `AGENTS.md`.
 2. **The learner's role.** Their primary role's purpose, core tasks, processes, and skills. Then each `Active` client assignment: the client slug and the role they play for that client. Do not describe assignments for anyone else.
 3. **Format concepts.** Namespaced format identifiers, the system header versus the client header, `None`, exact vocabulary display names, and record headings as references.
-4. **Processes.** The processes named by the role, plus how a stage's entry criteria, graduation criteria, and branching paths tell an agent where to stop.
+4. **Processes and shipped skills.** Domain processes named by the role, and the shipped skills named by the role. A stage's entry criteria, graduation criteria, and branching paths tell an agent where to stop. Shipped skills carry those rules themselves.
 5. **Approval gates.** A material change waits for an explicit human approval. Silence is not approval, and an agent is not an actor in a document header.
 6. **Source of truth.** When files disagree, authority runs from root `AGENTS.md` to the process, then the format, then subtree rules, then the skill, then `scripts/check.py`, then the data files. The format wins on document structure.
 7. **Client isolation.** A client folder does not refer to another client. `system/` may name a client slug on an assignment and must not hold that client's business facts.

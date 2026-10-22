@@ -9,6 +9,17 @@ description: Refine one application backlog item until it can be planned, then h
 
 Use this skill when the operator is ready to take one item on `system/application-backlog.md` from a captured request to an implementable plan. The implementation itself belongs to `improve-process`.
 
+## Boundaries
+
+- **Entry.** The operator selects one `Proposed` item. The item's dependencies are `None` or are themselves `Done`.
+- **Graduation.** The selected item is `Ready` or has moved to `In Progress` or `Done` under `improve-process`, the plan summary is on the row, and `python3 scripts/check.py` passes with zero errors.
+- **Handed off.** `improve-process` accepts the requirement and plan and keeps its own approval gate before governed mechanism files change.
+- **Still vague.** The operator cannot yet answer a question the plan depends on. The item stays `Proposed`, the open point is written into `## Request`, and the skill stops.
+- **Cancelled.** The operator drops the item. Status becomes `Cancelled`, `## Resolution` states why, and the row stays.
+- **Blocked.** A dependency is not `Done`. Stop without refining past the blocker.
+- Never invent acceptance criteria the operator did not confirm.
+- Never put a client-only fact on the application backlog.
+
 ## Inputs
 
 - An `APP-NNNN` heading. If omitted, list the `Proposed` items and ask the operator to pick one.
@@ -17,7 +28,6 @@ Use this skill when the operator is ready to take one item on `system/applicatio
 
 ## Reads
 
-- `process/backlog-management.md` Stage 2.
 - `formats/system/application-backlog.md` and `system/application-backlog.md`.
 - The processes, formats, skills, and system records the item appears to touch.
 - `.agents/skills/improve-process/SKILL.md`.

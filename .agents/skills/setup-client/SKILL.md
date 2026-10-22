@@ -9,6 +9,18 @@ description: Build a complete client folder under clients/ from an onboarding ha
 
 A client or primary business entity is ready to be onboarded, and a handoff file conforming to `formats/clients/handoff.md` is ready. This skill reads the handoff, its sibling folder, and this repository. Run it once per client.
 
+## Boundaries
+
+This skill creates `clients/<slug>/` and walks the Setup Ledger. It does not discover prospects, negotiate commercial terms, or change application mechanisms. Mechanism changes go to `improve-process`. Later review of open issues is `review-open-issues`.
+
+- **Entry.** A handoff file in `clients/handoff` format, plus any sibling asset folder and redacted `order-form.pdf`, for a client slug that does not yet exist in `clients/` or `archive/`.
+- **Graduation.** Every Setup Ledger entry is written into its target document or recorded as an `# Open` row. Every `# Closed` row has a matching decision-log row. `clients/README.md` includes the client. `python3 scripts/check.py <slug>` passes with zero errors, and `tmp/setup-report-<slug>.md` is written.
+- **Onboarded.** The client folder is lint-clean and can enter the application's operational work.
+- **Handoff rejected.** `python3 scripts/check.py --handoff <path>` reports an error. Stop before creating `clients/<slug>/`.
+- **Retired later.** When an active client leaves, move the folder to `archive/<slug>/` with an `ARCHIVED.md` note, and end active assignments for that slug through `update-user`.
+- Never create a client folder outside this skill.
+- Client work reads only this client's assignment rows from `system/client-assignments.md`.
+
 ## Inputs
 
 - `handoff_path` — path to the handoff Markdown file. Its sibling asset folder, if any, sits beside it named `<slug>/`.
@@ -18,7 +30,6 @@ A client or primary business entity is ready to be onboarded, and a handoff file
 
 ## Reads
 
-- `process/client-lifecycle.md`.
 - The handoff file and any sibling folder beside it.
 - `formats/README.md`, `formats/clients/handoff.md`, `formats/clients/client.md`, `formats/clients/open-issues.md`, `formats/clients/decision-log.md`, and any other client format the handoff table names.
 - `clients/README.md` and `clients/AGENTS.md`.

@@ -9,6 +9,17 @@ description: Walk one client's open issues one at a time, recommend a resolution
 
 Use this skill before or during a client meeting to resolve rows on `clients/<slug>/open-issues.md`. Each accepted resolution is written into the target document and appended to that client's decision log in the same change.
 
+## Boundaries
+
+- **Entry.** `clients/<slug>/` exists, and `open-issues.md` and `decision-log.md` were created by `setup-client`.
+- **Graduation.** The operator has accepted or deferred each issue that was presented. Every accepted issue has its answer in the target document and one new decision-log row. `python3 scripts/check.py <slug>` passes with zero errors.
+- **Resolved.** The presented issues are closed and the decision log holds them.
+- **Deferred.** An issue stays on `# Open` with the next step the operator stated.
+- **No open issues.** `# Open` is `None`. Stop immediately.
+- **Unknown client.** The slug is not a folder under `clients/`. Stop and ask the operator to pick a listed slug.
+- Closing an issue writes the target document and the decision log in the same change.
+- Client work reads only this client's assignment rows from `system/client-assignments.md`.
+
 ## Inputs
 
 - A client slug. If omitted, list the folders under `clients/` and ask the operator to pick one. Never guess.
@@ -17,7 +28,6 @@ Use this skill before or during a client meeting to resolve rows on `clients/<sl
 
 ## Reads
 
-- `process/client-lifecycle.md` Stage 2.
 - `formats/clients/open-issues.md`, `formats/clients/decision-log.md`, and `formats/clients/client.md`.
 - `clients/<slug>/open-issues.md`, `clients/<slug>/decision-log.md`, `clients/<slug>/client.md`, and the other files in that client folder.
 - Assignment rows in `system/client-assignments.md` whose client slug is this client, plus the named users and roles. Do not read assignment rows for other clients.

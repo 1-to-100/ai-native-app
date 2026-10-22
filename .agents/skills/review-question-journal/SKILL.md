@@ -9,6 +9,19 @@ description: Review open question-journal rows and turn each approved remedy int
 
 Use this skill when `system/question-journal.md` has `# Open` rows, or when the operator asks to review questions agents had to ask beyond what a skill required. Run it at repository level, not inside one client folder.
 
+## Boundaries
+
+This skill covers `system/question-journal.md` and the handoff of an approved remedy to `improve-process`. It does not close a question because the operator answered it in the session. Missing client facts belong in `review-open-issues`, not in this journal.
+
+- **Entry.** The operator invokes this skill, and `# Open` contains at least one row. Each row names the question, the skill or `—`, the process or `—`, the stage, and the model that asked.
+- **Graduation.** Every presented row was approved and closed by a recorded change, or explicitly left open. `python3 scripts/check.py` passes with zero errors. A closed row cites the change that absorbed it.
+- **Absorbed.** The approved remedy was applied through `improve-process`, and the journal row moved to `# Closed`.
+- **Left open.** The operator rejects the remedy or defers it. The row stays on `# Open`.
+- **Empty journal.** `# Open` is `None`. Stop without inventing a question.
+- **Recurrence.** A new question cites an earlier closed `#`. The new row stays open, and the earlier change is treated as defective input to `improve-process`.
+- Never apply a remedy before the operator approves it.
+- Remedy proposals stay in `tmp/` until `improve-process` applies an approved change.
+
 ## Inputs
 
 - Operator approval, rejection, or deferral for each proposed remedy.
@@ -16,7 +29,6 @@ Use this skill when `system/question-journal.md` has `# Open` rows, or when the 
 
 ## Reads
 
-- `process/question-review.md`.
 - `formats/system/question-journal.md` and `system/question-journal.md`.
 - The skill, process, and stage named on each open row.
 - `.agents/skills/improve-process/SKILL.md`.

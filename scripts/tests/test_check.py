@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 CHECK = ROOT / "scripts" / "check.py"
 OPERATOR = "operator@example.com"
 
@@ -118,7 +118,7 @@ Runs the application.
 ## Core Tasks
 Configure shared records.
 ## Processes
-- application-lifecycle
+None
 ## Skills
 - setup-application
 ## Status
@@ -343,8 +343,8 @@ None
         self.assertIn("not on disk", result.stdout)
 
     def test_renamed_skill_reference_fails(self) -> None:
-        path = self.repo / "process" / "client-lifecycle.md"
-        path.write_text(path.read_text(encoding="utf-8").replace("`setup-client`", "`create-application`"), encoding="utf-8")
+        path = self.repo / "process" / "sample-workflow.md"
+        path.write_text("# Process: sample-workflow (version 1)\n\n`create-application`\n", encoding="utf-8")
         result = run_check(self.repo)
         self.assertIn("create-application", result.stdout)
 

@@ -9,6 +9,14 @@ description: Plan and apply an upgrade from the current template application, th
 
 Use this skill when the operator wants this repository brought up to the current template application paradigm at `https://github.com/1-to-100/ai-native-app`. The template's `docs/build-any-ai-application.md` is the process to follow.
 
+## Boundaries
+
+- **Entry.** The operator invokes this skill, the worktree has no unrelated uncommitted changes, and `https://github.com/1-to-100/ai-native-app` is reachable.
+- **Graduation.** The upgrade plan is in `docs/upgrades/`, the review subagent reports no remaining gaps, and `python3 scripts/setup-scripts.py --check` and `python3 scripts/check.py` exit with zero errors.
+- **Upgraded.** Tell the operator the upgrade is complete. The operator reviews the diff before commit.
+- **Blocked.** Unrelated uncommitted work or an unreachable template URL stops the skill before any upgrade edit.
+- **Review failed.** The final review subagent could not make the repository match the upgrade plan. Stop with the findings still open.
+
 ## Inputs
 
 - Operator confirmation to start the upgrade.
@@ -17,7 +25,6 @@ Use this skill when the operator wants this repository brought up to the current
 
 ## Reads
 
-- `process/application-lifecycle.md` Stage 2.
 - The local `docs/build-any-ai-application.md`, so the comparison has a starting point.
 - After the clone: the template's `docs/build-any-ai-application.md` and the template files that document names, including root `AGENTS.md`, `process/`, `formats/`, `system/`, `.agents/skills/`, and `scripts/`.
 

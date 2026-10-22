@@ -9,6 +9,16 @@ description: Add, edit, or retire a user and coordinate that person's primary ro
 
 Use this skill when a person starts using the application, their name or primary role changes, their client assignments change, or they stop using the application. Use `setup-application` instead when the change is the shared external-system list rather than a person.
 
+## Boundaries
+
+This skill covers `system/users.md`, `system/user-roles.md`, and `system/client-assignments.md`. Shared installation of an external system belongs to `setup-application`. Connecting one person's accounts is `setup-my-integrations`. Teaching a person is `train-me`. This skill does not grant repository permissions and does not store secrets.
+
+- **Entry.** The operator can name the person to add, edit, or retire. Role headings used in the change already exist in `system/user-roles.md`, or the operator is prepared to add the role in the same session.
+- **Graduation.** The user row matches the operator's answers, every affected assignment is `Active` or `Ended` consistently with that answer, and `python3 scripts/check.py` passes with zero errors.
+- **Recorded.** The user and assignments match the interview and the skill ends.
+- **Role missing.** The named role is not in `system/user-roles.md`. Interview for the role's purpose, tasks, processes, and skills, write the role, and then continue the user change.
+- **Cancelled.** The operator stops before approval. Do not leave a partial user or assignment write in place.
+
 ## Inputs
 
 - The action: add, edit, or retire. Ask if the operator did not say which.
@@ -18,7 +28,6 @@ Use this skill when a person starts using the application, their name or primary
 
 ## Reads
 
-- `process/user-administration.md` Stage 1.
 - `formats/system/users.md`, `formats/system/user-roles.md`, and `formats/system/client-assignments.md`.
 - `system/users.md`, `system/user-roles.md`, `system/client-assignments.md`, and `system/AGENTS.md`.
 - `clients/README.md` and the client folder names under `clients/` and `archive/`.

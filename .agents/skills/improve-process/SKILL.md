@@ -9,6 +9,16 @@ description: Refine a mechanism change until it can be planned, then implement t
 
 Use this skill when the operator wants to change how the application works, add or modify a workflow stage, capture a new field, tighten a guardrail, or turn a manual gap into a skill. Also use it when `process-backlog` or `review-question-journal` hands over a requirement that changes processes, formats, skills, or scripts. A change that only edits records in `system/` without changing a mechanism belongs to `setup-application` or `update-user`.
 
+## Boundaries
+
+- **Entry.** The operator invokes this skill with a change request, or `process-backlog` hands over one backlog item whose requirement and plan are ready for implementation.
+- **Graduation.** The operator approved the plan, the final review subagent finished, affected mechanisms and active documents agree, and `python3 scripts/setup-scripts.py --check` and `python3 scripts/check.py` exit with zero errors.
+- **Accepted and applied.** The working tree is ready for the operator to review and commit.
+- **Plan revised.** The operator changes the plan at the approval gate. Implementation does not start until the revised plan is approved.
+- **Proposal rejected.** The operator declines the plan. Governed files stay as they were before this run.
+- Never modify a format contract without bumping `format_version`, migrating active files, and updating `scripts/check.py` in the same change.
+- Interstitial requirement, plan, and review files stay in `tmp/`.
+
 ## Inputs
 
 - The operator's change request, or the refined requirement and plan path handed over by `process-backlog` or `review-question-journal`.
