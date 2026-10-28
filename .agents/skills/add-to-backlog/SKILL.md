@@ -11,7 +11,7 @@ Use this skill when the operator wants to keep an application change or enhancem
 
 ## Boundaries
 
-This skill covers `system/application-backlog.md` only. Refining and handing one item to `improve-process` is `process-backlog`.
+This skill covers `system/application-backlog.md` only. Triaging the backlog and working each accepted item to a commit is `process-backlog`.
 
 - **Entry.** The operator invokes this skill with a request, or is ready to state one. The request is an application change, not a missing fact about one client.
 - **Graduation.** A new `Proposed` row exists, its heading has never been used, and `python3 scripts/check.py` passes with zero errors.

@@ -28,7 +28,7 @@ tmp/                 git-ignored working folder for interstitial agent files, pr
 - Connect one user's external-system accounts: `/setup-my-integrations`
 - Teach a user the system and their role: `/train-me`
 - Save a later application change: `/add-to-backlog`
-- Refine one backlog item and hand it to process improvement: `/process-backlog`
+- Triage the backlog and work each accepted item through to a commit: `/process-backlog`
 - Resolve a client's open issues into the decision log: `/review-open-issues <client-slug>`
 - Turn journaled operator questions into process or prompting changes: `/review-question-journal`
 - Propose, implement, and independently review a mechanism change: `/improve-process "<what needs to change>"`
