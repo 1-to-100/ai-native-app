@@ -4,7 +4,6 @@
 Usage:
   python3 scripts/check.py                  # whole repository
   python3 scripts/check.py <client-slug>    # one client folder
-  python3 scripts/check.py --handoff <path> # validate an onboarding handoff file
   python3 scripts/check.py --staged         # require updated/updated_by changes on staged data docs
   python3 scripts/check.py --root <path>    # lint another checkout (used by tests)
 
@@ -30,7 +29,7 @@ SCRIPTS_DIR = ROOT / "scripts"
 
 VENDORS = {"Claude", "OpenAI", "Gemini"}
 SOR_MODES = {"Repository Markdown", "External System"}
-ISSUE_AREAS = {"Client", "Entitlements", "Access", "Process"}
+ISSUE_AREAS = {"Client", "Order Form", "Access", "Process"}
 USER_STATUSES = {"Active", "Retired"}
 ROLE_STATUSES = {"Active", "Retired"}
 ASSIGNMENT_STATUSES = {"Active", "Ended"}
@@ -45,6 +44,11 @@ SYSTEM_CATEGORIES = {
     "Other",
 }
 EXTERNAL_STATUSES = {"Planned", "Active", "Retired"}
+PRICING_MODELS = {"Fixed Fee", "Per Unit", "Tiered", "Usage-Based", "Time and Materials"}
+FREQUENCIES = {"Daily", "Weekly", "Monthly", "Quarterly", "Annual", "One Time"}
+ITEM_STATUSES = {"Active", "Retired"}
+ORDER_STATUSES = {"Draft", "Sent", "Signed", "Cancelled"}
+RENEWAL_TERMS = {"Auto-Renew", "Manual Renewal", "Does Not Renew"}
 BACKLOG_STATUSES = {"Proposed", "Ready", "In Progress", "Done", "Cancelled"}
 AGENT_NAMES = {"claude", "codex", "chatgpt", "gemini", "cursor", "agent", "ai", "bot"}
 SKILL_SECTIONS = [
@@ -104,6 +108,29 @@ EXTERNAL_FIELDS = [
     "User Connection",
     "Owner",
 ]
+PRODUCT_FIELDS = [
+    "Overview",
+    "Specification",
+    "Pricing Model",
+    "Pricing Unit",
+    "List Price",
+    "Frequency",
+    "Status",
+]
+ORDER_SECTIONS = ["Order Details", "Parties", "Line Items", "Commercial Terms", "Execution", "Notes"]
+ORDER_DETAIL_FIELDS = [
+    "Order Number",
+    "Status",
+    "Plan Name",
+    "Order Date",
+    "Effective Date",
+    "Term End",
+    "Renewal",
+]
+ORDER_PARTY_FIELDS = ["Customer Legal Name", "Customer Signatory", "Sales Representative"]
+ORDER_TERMS_FIELDS = ["Currency", "Billing Contact", "Payment Terms", "Discounts and Adjustments"]
+ORDER_EXECUTION_FIELDS = ["Signed Date", "Signed Copy"]
+ORDER_LINE_COLUMNS = ["Product or Service", "Specification", "Quantity", "Unit", "Unit Price", "Frequency"]
 BACKLOG_FIELDS = [
     "Title",
     "Status",
@@ -118,12 +145,15 @@ BACKLOG_FIELDS = [
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-MONTH_RE = re.compile(r"^\d{4}-\d{2}$")
+PRICE_RE = re.compile(r"^\d+(?:\.\d+)? [A-Z]{3}$")
+CURRENCY_RE = re.compile(r"^[A-Z]{3}$")
+NUMBER_RE = re.compile(r"^\d+(?:\.\d+)?$")
+CARD_RE = re.compile(r"\b(?:\d[ -]?){13,19}\b")
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 FRONT_MATTER_RE = re.compile(r"\A---\n(.*?)\n---\n(.*)\Z", re.S)
 STALE_SKILL_RE = re.compile(r"(?<![\w-])create-application(?![\w-])")
 STALE_FORMAT_RE = re.compile(
-    r"(?<![\w/])formats/(global-context|process|client|open-issues|handoff|decision-log|question-journal)\.md"
+    r"(?<![\w/])formats/(global-context|process|client|open-issues|decision-log|question-journal)\.md"
 )
 SECRET_RE = re.compile(
     r"(?i)\b(password|api[_-]?key|secret|access[_-]?token|token)\b\s*[:=]\s*\S+"
@@ -688,6 +718,124 @@ def lint_external(body: str, users: set[str], findings: list[str], where: str) -
             findings.append(f"ERROR {where} -> # {heading} -> ## Owner: unknown user {owner!r}")
 
 
+def lint_products(body: str, findings: list[str], where: str) -> dict[str, str]:
+    parsed = records(body, findings, where)
+    specs: dict[str, str] = {}
+    if not parsed:
+        return specs
+    for heading, subs in parsed.items():
+        got = fields_of(subs, PRODUCT_FIELDS, findings, f"{where} -> # {heading}")
+        if got is None:
+            continue
+        if got["Overview"] == "None" or got["Specification"] == "None":
+            findings.append(f"ERROR {where} -> # {heading}: Overview and Specification are required")
+        if "|" in got["Specification"] or "\n" in got["Specification"]:
+            findings.append(
+                f"ERROR {where} -> # {heading} -> ## Specification: must be one line without a pipe character"
+            )
+        for name, vocab in (("Pricing Model", PRICING_MODELS), ("Frequency", FREQUENCIES), ("Status", ITEM_STATUSES)):
+            if got[name] not in vocab:
+                findings.append(f"ERROR {where} -> # {heading} -> ## {name}: {got[name]!r} is not in its vocabulary")
+        if got["List Price"] != "None" and not PRICE_RE.match(got["List Price"]):
+            findings.append(f"ERROR {where} -> # {heading} -> ## List Price: must be '<number> <CODE>' or None")
+        specs[heading] = got["Specification"]
+    return specs
+
+
+def read_system_body(filename: str) -> str | None:
+    path = SYSTEM_DIR / filename
+    if not path.is_file():
+        return None
+    match = FRONT_MATTER_RE.match(path.read_text(encoding="utf-8"))
+    return match.group(2) if match else None
+
+
+def contact_ok(text: str) -> bool:
+    if text == "None":
+        return True
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    return (
+        len(lines) == 2
+        and lines[0].startswith("- Name: ")
+        and lines[1].startswith("- Email: ")
+        and bool(EMAIL_RE.match(lines[1][len("- Email: "):].strip()))
+    )
+
+
+def validate_order_form_body(
+    body: str,
+    where: str,
+    folder: Path | None,
+    catalog: dict[str, str] | None,
+    user_emails: set[str] | None,
+    findings: list[str],
+) -> None:
+    secs = parse_sections(body, 1)
+    if [heading for heading, _ in secs] != ORDER_SECTIONS:
+        findings.append(f"ERROR {where}: # sections must be {ORDER_SECTIONS}, got {[h for h, _ in secs]}")
+        return
+    sec_map = dict(secs)
+    for heading, value in secs:
+        if not value.strip():
+            findings.append(f"ERROR {where} -> # {heading}: section cannot be empty (use None if unknown)")
+    if CARD_RE.search(body):
+        findings.append(f"ERROR {where}: must not contain a card or bank number")
+
+    def fields(section: str, expected: list[str]) -> dict[str, str]:
+        got = fields_of(parse_sections(sec_map[section], 2), expected, findings, f"{where} -> # {section}")
+        return got or {}
+
+    def date_ok(field: str, value: str, allow_none: bool) -> None:
+        if value and not (allow_none and value == "None") and not valid_date(value):
+            findings.append(f"ERROR {where} -> ## {field}: must be YYYY-MM-DD{' or None' if allow_none else ''}")
+
+    details = fields("Order Details", ORDER_DETAIL_FIELDS)
+    if details:
+        if details["Status"] not in ORDER_STATUSES:
+            findings.append(f"ERROR {where} -> ## Status: {details['Status']!r} is not an order status")
+        if details["Renewal"] not in RENEWAL_TERMS:
+            findings.append(f"ERROR {where} -> ## Renewal: {details['Renewal']!r} is not a renewal term")
+        date_ok("Order Date", details["Order Date"], False)
+        date_ok("Effective Date", details["Effective Date"], True)
+        date_ok("Term End", details["Term End"], True)
+    parties = fields("Parties", ORDER_PARTY_FIELDS)
+    if parties:
+        if not contact_ok(parties["Customer Signatory"]):
+            findings.append(f"ERROR {where} -> ## Customer Signatory: must be '- Name: ...' and '- Email: ...' or None")
+        rep_email = parties["Sales Representative"]
+        if rep_email != "None" and user_emails is not None and rep_email not in user_emails:
+            findings.append(f"ERROR {where} -> ## Sales Representative: {rep_email!r} is not a record in system/users.md")
+    terms = fields("Commercial Terms", ORDER_TERMS_FIELDS)
+    if terms:
+        if terms["Currency"] != "None" and not CURRENCY_RE.match(terms["Currency"]):
+            findings.append(f"ERROR {where} -> ## Currency: must be an ISO 4217 code or None")
+        if not contact_ok(terms["Billing Contact"]):
+            findings.append(f"ERROR {where} -> ## Billing Contact: must be '- Name: ...' and '- Email: ...' or None")
+    execution = fields("Execution", ORDER_EXECUTION_FIELDS)
+    if execution:
+        date_ok("Signed Date", execution["Signed Date"], True)
+        if details and details["Status"] == "Signed" and execution["Signed Date"] == "None":
+            findings.append(f"ERROR {where} -> ## Signed Date: required once status is Signed")
+        copy = execution["Signed Copy"]
+        if copy not in {"None", "order-form.pdf"}:
+            findings.append(f"ERROR {where} -> ## Signed Copy: must be order-form.pdf or None")
+        elif copy == "order-form.pdf" and folder is not None and not (folder / "order-form.pdf").is_file():
+            findings.append(f"ERROR {where} -> ## Signed Copy: order-form.pdf is missing")
+    rows = parse_table(sec_map["Line Items"], ORDER_LINE_COLUMNS, findings, f"{where} -> # Line Items") or []
+    for row in rows:
+        name, spec, quantity, _unit, price, frequency = row
+        if frequency not in FREQUENCIES:
+            findings.append(f"ERROR {where} -> # Line Items: {name!r} frequency {frequency!r} is not a frequency")
+        for label, value in (("Quantity", quantity), ("Unit Price", price)):
+            if value != "None" and not NUMBER_RE.match(value):
+                findings.append(f"ERROR {where} -> # Line Items: {name!r} {label} must be a number or None")
+        if catalog is not None:
+            if name not in catalog:
+                findings.append(f"ERROR {where} -> # Line Items: {name!r} is not in system/products-and-services.md")
+            elif spec != catalog[name]:
+                findings.append(f"ERROR {where} -> # Line Items: {name!r} Specification differs from the catalog")
+
+
 def lint_backlog(body: str, findings: list[str], where: str) -> None:
     parsed = records(body, findings, where)
     if not parsed:
@@ -798,6 +946,12 @@ def lint_system(versions: dict[str, int], findings: list[str], headers: dict[str
         header, body = header_and_body(path, format_id, versions, findings, None)
         headers[rel(path)] = header
         bodies[filename] = body
+    products_path = SYSTEM_DIR / "products-and-services.md"
+    if products_path.is_file():
+        count += 1
+        header, body = header_and_body(products_path, "system/products-and-services", versions, findings, None)
+        headers[rel(products_path)] = header
+        lint_products(body, findings, "system/products-and-services.md")
     role_status = lint_roles(bodies.get("user-roles.md", "None"), findings, "system/user-roles.md")
     user_status = lint_users(bodies.get("users.md", "None"), role_status, findings, "system/users.md")
     lint_assignments(
@@ -817,8 +971,8 @@ def lint_system(versions: dict[str, int], findings: list[str], headers: dict[str
     return count
 
 
-def validate_client_body(body: str, where: str, folder: Path | None, findings: list[str]) -> None:
-    expected = ["General Information", "Business Overview", "Business Problem", "Solution", "Entitlements", "Notes"]
+def validate_client_body(body: str, where: str, findings: list[str]) -> None:
+    expected = ["General Information", "Business Overview", "Business Problem", "Solution", "Notes"]
     secs = parse_sections(body, 1)
     if [heading for heading, _ in secs] != expected:
         findings.append(f"ERROR {where}: # sections must be {expected}, got {[heading for heading, _ in secs]}")
@@ -844,20 +998,6 @@ def validate_client_body(body: str, where: str, folder: Path | None, findings: l
             or not EMAIL_RE.match(lines[1][len("- Email: "):].strip())
         ):
             findings.append(f"ERROR {where} -> ## Contact: must be '- Name: ...' and '- Email: <valid-email>' or None")
-    entitlements = parse_sections(sec_map.get("Entitlements", ""), 2)
-    expected_entitlements = ["Order Form", "Plan Name", "Starts", "Renews", "Deliverables"]
-    if [heading for heading, _ in entitlements] != expected_entitlements:
-        findings.append(f"ERROR {where} -> # Entitlements: ## sections must be {expected_entitlements}")
-    ent_map = dict(entitlements)
-    order_form = ent_map.get("Order Form", "").strip()
-    if folder is not None and order_form == "order-form.pdf" and not (folder / "order-form.pdf").is_file():
-        findings.append(f"ERROR {where} -> ## Order Form: order-form.pdf is missing")
-    starts = ent_map.get("Starts", "").strip()
-    if starts and starts != "None" and not MONTH_RE.match(starts):
-        findings.append(f"ERROR {where} -> ## Starts: must be YYYY-MM or None")
-    renews = ent_map.get("Renews", "").strip()
-    if renews and renews != "None" and not valid_date(renews):
-        findings.append(f"ERROR {where} -> ## Renews: must be YYYY-MM-DD or None")
 
 
 def validate_open_issues(body: str, findings: list[str], where: str) -> tuple[set[int], set[int]]:
@@ -969,7 +1109,7 @@ def lint_client_folder(
         headers[rel(path)] = header
         bodies[filename] = body
     if "client.md" in bodies:
-        validate_client_body(bodies["client.md"], rel(folder / "client.md"), folder, findings)
+        validate_client_body(bodies["client.md"], rel(folder / "client.md"), findings)
     all_ids, closed_ids = set(), set()
     if "open-issues.md" in bodies:
         all_ids, closed_ids = validate_open_issues(bodies["open-issues.md"], findings, rel(folder / "open-issues.md"))
@@ -978,51 +1118,23 @@ def lint_client_folder(
         sources = validate_decision_log(bodies["decision-log.md"], findings, rel(folder / "decision-log.md"))
     if "open-issues.md" in bodies and "decision-log.md" in bodies:
         cross_check_decisions(closed_ids, all_ids, sources, findings, rel(folder / "decision-log.md"))
+    order_path = folder / "order-form.md"
+    if order_path.is_file():
+        count += 1
+        header, body = header_and_body(order_path, "clients/order-form", versions, findings, slug)
+        headers[rel(order_path)] = header
+        catalog_body = read_system_body("products-and-services.md")
+        catalog = lint_products(catalog_body, [], "") if catalog_body is not None else None
+        users_body = read_system_body("users.md")
+        user_emails = set(records(users_body, [], "") or {}) if users_body is not None else None
+        validate_order_form_body(body, rel(order_path), folder, catalog, user_emails, findings)
     for stray in sorted(folder.glob("*.md")):
-        if stray.name not in required:
+        if stray.name not in required and stray.name != "order-form.md":
             findings.append(f"ERROR {rel(stray)}: file name does not mirror a registered client format")
     readme = CLIENTS_DIR / "README.md"
     if readme.is_file() and slug not in readme.read_text(encoding="utf-8"):
         findings.append(f"ERROR clients/README.md: inventory is missing client {slug!r}")
     return count
-
-
-def shift_headings_up(text: str) -> str:
-    out: list[str] = []
-    in_fence = False
-    for line in text.splitlines():
-        if line.strip().startswith("```"):
-            in_fence = not in_fence
-        out.append(line[1:] if not in_fence and line.startswith("##") else line)
-    return "\n".join(out)
-
-
-def lint_handoff(path: Path, versions: dict[str, int], findings: list[str]) -> int:
-    where = rel(path)
-    header, body = header_and_body(path, "clients/handoff", versions, findings, None)
-    if header.get("client") and not SLUG_RE.match(header.get("client", "")):
-        findings.append(f"ERROR {where}: header client must be a lowercase kebab-case slug")
-    chapters = parse_sections(body, 1)
-    expected = ["Client", "Open Issues", "Decision Log"]
-    if [heading for heading, _ in chapters] != expected:
-        findings.append(f"ERROR {where}: handoff # chapters must be {expected}, got {[heading for heading, _ in chapters]}")
-        return 1
-    chapter_map = dict(chapters)
-    client_body = shift_headings_up(chapter_map["Client"])
-    validate_client_body(client_body, f"{where} (# Client)", None, findings)
-    order_form = re.search(r"^## Order Form\n+([^\n#]+)", client_body, re.M)
-    if order_form and order_form.group(1).strip() != "None" and not (path.parent / order_form.group(1).strip()).is_file():
-        findings.append(f"ERROR {where}: order form {order_form.group(1).strip()!r} does not exist beside the handoff")
-    all_ids, closed_ids = validate_open_issues(
-        shift_headings_up(chapter_map["Open Issues"]), findings, f"{where} (# Open Issues)"
-    )
-    sources = validate_decision_log(
-        shift_headings_up(chapter_map["Decision Log"]), findings, f"{where} (# Decision Log)"
-    )
-    cross_check_decisions(closed_ids, all_ids, sources, findings, f"{where} (# Decision Log)")
-    if "\nNone" in client_body and chapter_map["Open Issues"].strip().endswith("None"):
-        findings.append(f"WARN  {where}: # Client contains None sections; setup-client will add them to the Setup Ledger")
-    return 1
 
 
 def check_staged(headers: dict[str, dict[str, str]], findings: list[str]) -> None:
@@ -1088,12 +1200,7 @@ def main(argv: list[str]) -> int:
     versions = load_formats(findings)
     checked = len(versions)
 
-    if "--handoff" in flags:
-        if not args or not Path(args[0]).is_file():
-            print("ERROR --handoff requires a path to an existing handoff Markdown file")
-            return 1
-        checked += lint_handoff(Path(args[0]).resolve(), versions, findings)
-    elif args:
+    if args:
         folder = CLIENTS_DIR / args[0]
         if not folder.is_dir():
             print(f"ERROR clients/{args[0]}: no such client folder")

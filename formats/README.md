@@ -3,7 +3,7 @@
 Every governed document in this repository conforms to one format contract in this directory. Contracts live in two namespaces:
 
 - `formats/system/` governs repository-wide files, including root `AGENTS.md`, process documents, and the records in `system/`.
-- `formats/clients/` governs files in `clients/<slug>/` and the incoming handoff that creates them.
+- `formats/clients/` governs files in `clients/<slug>/`.
 
 The format identifier is the contract path relative to `formats/` without `.md`. A user registry declares `format: system/users`. A client profile declares `format: clients/client`. Identifiers are globally unique.
 
@@ -15,6 +15,7 @@ The format identifier is the contract path relative to `formats/` without `.md`.
 | [`system/process.md`](system/process.md) | `process/<slug>.md` | `# Process: <slug> (version N)` | business process |
 | [`system/users.md`](system/users.md) | `system/users.md` | System header | repository |
 | [`system/user-roles.md`](system/user-roles.md) | `system/user-roles.md` | System header | repository |
+| [`system/products-and-services.md`](system/products-and-services.md) | `system/products-and-services.md` (optional) | System header | repository |
 | [`system/client-assignments.md`](system/client-assignments.md) | `system/client-assignments.md` | System header | repository |
 | [`system/external-systems.md`](system/external-systems.md) | `system/external-systems.md` | System header | repository |
 | [`system/application-backlog.md`](system/application-backlog.md) | `system/application-backlog.md` | System header | repository |
@@ -22,7 +23,7 @@ The format identifier is the contract path relative to `formats/` without `.md`.
 | [`clients/client.md`](clients/client.md) | `clients/<slug>/client.md` | Client header | client |
 | [`clients/open-issues.md`](clients/open-issues.md) | `clients/<slug>/open-issues.md` | Client header | client |
 | [`clients/decision-log.md`](clients/decision-log.md) | `clients/<slug>/decision-log.md` | Client header | client |
-| [`clients/handoff.md`](clients/handoff.md) | Incoming onboarding handoff file (never stored in the repository) | Client header | client, at setup |
+| [`clients/order-form.md`](clients/order-form.md) | `clients/<slug>/order-form.md` (optional) | Client header | client |
 
 When `setup-application` or `improve-process` adds a document type, the contract goes under `formats/system/` or `formats/clients/` according to the files it governs, and this table gains a row in the same change.
 
@@ -58,7 +59,7 @@ System records do not carry a `client` key.
 
 ## The client header
 
-Every governed document under `clients/<slug>/`, and every handoff, opens with the system header keys plus `client` immediately after `format_version`:
+Every governed document under `clients/<slug>/`, opens with the system header keys plus `client` immediately after `format_version`:
 
 | Key | Type | Required | Meaning |
 | --- | --- | --- | --- |
@@ -68,7 +69,7 @@ Every governed document under `clients/<slug>/`, and every handoff, opens with t
 ---
 title: Acme Corp
 format: clients/client
-format_version: 2
+format_version: 3
 client: acme-corp
 created: 2026-10-22
 created_by: founder@company.com

@@ -11,6 +11,8 @@ Repository-wide records that are shared across the application live here. Client
 | [`application-backlog.md`](application-backlog.md) | `system/application-backlog` | Application changes and enhancements to implement later. |
 | [`question-journal.md`](question-journal.md) | `system/question-journal` | Operator questions that a skill did not already require, and the change that absorbed each one. |
 
+`products-and-services.md` (format `system/products-and-services`) is an optional record: the catalog of products and services the organization can sell. It is created through `setup-application` and, once present, gains a row in the table above.
+
 ## Adding a record
 
 Add a format contract under `formats/system/` first, then add the data file here and a row in the table above in the same change. Update `scripts/check.py` so the new file is required and validated. Run `python3 scripts/check.py`.

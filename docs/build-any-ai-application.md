@@ -122,7 +122,7 @@ updated_by: founder@company.com
 #### Headings as Database Fields
 
 Below the header, Markdown headings (`#`, `##`, `###`) act as strict database columns in a fixed order:
-* In a **single-record document** (like `client.md`), `#` headings are top-level sections (`# General Information`, `# Business Overview`, `# Entitlements`) and `##` headings are individual fields (`## Name`, `## Website`).
+* In a **single-record document** (like `client.md`), `#` headings are top-level sections (`# General Information`, `# Business Overview`, `# Business Problem`) and `##` headings are individual fields (`## Name`, `## Website`).
 * In a **multi-record document** (like a topic catalog, a persona list, or a weekly plan), each `#` heading is a record's unique name, and the format's sections shift down one heading level underneath it.
 * Short repeated rows use standard Markdown tables with fixed column headers.
 
@@ -237,7 +237,7 @@ Every skill lives in `<skills-dir>/<skill-name>/SKILL.md`, is registered in `<sk
 
 LLMs are probabilistic engines; they are terrible accountants. You never rely on an LLM's promise that it followed a format contract. You enforce the contract with deterministic Python or TypeScript programs in `scripts/`, documented in `scripts/README.md`:
 
-* **`scripts/check.py`** lints every governed Markdown file in the repository against its format contract: YAML front matter keys and types, `format_version` alignment, exact heading hierarchy and section order, closed vocabulary values, cross-file reference integrity, stage structure in `process/`, inventory synchronization, `--handoff <path>` pre-flight validation, and `--staged` commit checks verifying that `updated` and `updated_by` changed on every modified file. It reports `ERROR` and `WARN` lines and never edits a file itself.
+* **`scripts/check.py`** lints every governed Markdown file in the repository against its format contract: YAML front matter keys and types, `format_version` alignment, exact heading hierarchy and section order, closed vocabulary values, cross-file reference integrity, stage structure in `process/`, inventory synchronization, and `--staged` commit checks verifying that `updated` and `updated_by` changed on every modified file. It reports `ERROR` and `WARN` lines and never edits a file itself.
 * **`scripts/setup-scripts.py`** configures and verifies the repository's skill exposure and native context pointers for the target AI environment (`--env claude`, `--env openai`, `--env gemini`, or `--check`), ensuring every skill in `<skills-dir>/` is wired up and matches `<skills-dir>/README.md`.
 
 ### 5.8. Shared Catalogs (Catalogs and Registries)
@@ -250,7 +250,7 @@ Processes, formats, skills, and scripts are the machinery of your factory. Share
 
 **Client (or Entity) Data** gives each customer, account, or project its own isolated folder under `clients/<slug>/` whose filenames mirror the format contracts in `formats/`:
 
-* `client.md` (and a redacted `order-form.pdf` when commercial terms apply) is the single source of truth for who the client is and what they are entitled to. No other file restates those facts.
+* `client.md` is the single source of truth for who the client is, and `order-form.md` (when the client has ordered products or services) is the single source of truth for what the client is owed and on what frequency. No other file restates those facts.
 * Domain foundation documents (such as personas, topics, style guides, or requirements) hold the grounded context for that client.
 * Active operational files (such as `current-plan.md`, `prior-plans/<YYYY-MM-DD>.md`, and produced deliverables) track the work moving through the stages defined in `process/`.
 * `open-issues.md` holds every unresolved question or missing fact (`# Open` and `# Closed` tables), linked by `Area` to the exact document where the answer will land once resolved. Closing an issue requires writing the answer into that target document in the same commit.
@@ -304,9 +304,9 @@ No process survives first contact with reality unchanged. As you run your applic
 Whenever your application manages clients, customers, deals, or projects, you need a single, disciplined gateway for bringing a new entity into the repository. That gateway is `setup-client`. There is never a second, informal backdoor for creating client folders by hand.
 
 **How `setup-client` works:**
-1. **Pre-Flight Validation:** Takes a path to an upstream `handoff.md` file (and any required commercial contract like `order-form.pdf`) and runs `python3 scripts/check.py --handoff <path>` before writing anything to `clients/`. If the handoff is malformed, it stops and returns the exact errors.
-2. **Mechanical Scaffolding and Setup Ledger:** Creates `clients/<slug>/`, splits the handoff chapters into their format-governed documents (`client.md`, `open-issues.md`, `decision-log.md`, and any domain files your application defines) with standard YAML headers stamped with your operator email, and opens a running **Setup Ledger**. Every section written as `None`, every placeholder value, every conflict between the handoff text and the commercial order form, and every `check.py` warning is added to the Setup Ledger with its `Area`, `Evidence`, and a `Recommended Approach`—never a guessed fact.
-3. **Interactive Ledger Walk:** Walks the Setup Ledger with you in chat, one entry at a time. When you accept a recommendation or supply an answer, the skill writes it into the target document, moves the issue to `# Closed` in `open-issues.md`, and appends the decision to `decision-log.md`. When you defer an item (because only the client can answer it), the skill ensures an open row exists in `open-issues.md` with a concrete `Next Step`.
+1. **Intake:** Takes whatever the operator provides (pasted text, notes, files, or nothing), asks for the client slug, and stops if `clients/<slug>/` or `archive/<slug>/` already exists.
+2. **Mechanical Scaffolding and Setup Ledger:** Creates `clients/<slug>/`, writes what the operator supplied into the format-governed documents (`client.md`, `open-issues.md`, `decision-log.md`, and any domain files your application defines) with standard YAML headers stamped with your operator email, and opens a running **Setup Ledger**. Every section written as `None`, every placeholder value, every required field the operator has not yet answered, and every `check.py` warning is added to the Setup Ledger with its `Area`, `Evidence`, and a `Recommended Approach`—never a guessed fact.
+3. **Interview and Ledger Walk:** Interviews you for each blank required field and walks the Setup Ledger with you in chat, one entry at a time. When you accept a recommendation or supply an answer, the skill writes it into the target document, moves the issue to `# Closed` in `open-issues.md`, and appends the decision to `decision-log.md`. When you defer an item (because only the client can answer it), the skill ensures an open row exists in `open-issues.md` with a concrete `Next Step`.
 4. **Verification and Report:** Runs `python3 scripts/check.py <slug>` after every write, saves the complete ledger record to `tmp/setup-report-<slug>.md` (uncommitted), and stops with a lint-clean client folder ready for commit.
 
 ### 6.4. `review-question-journal` — Turning Questions into Fewer Questions
@@ -356,7 +356,7 @@ formats/                    Format contracts (schemas) for every governed Markdo
   README.md                 Shared header, body, reference, and naming conventions + format inventory
   AGENTS.md                 Rules for changing formats and bumping format_version atomically
   system/                   Contracts for root context, processes, and system/ records
-  clients/                  Contracts for client records and the onboarding handoff
+  clients/                  Contracts for client records
 clients/                    One isolated subfolder per client or entity (clients/<slug>/)
   README.md                 How client folders are structured and operated
   AGENTS.md                 Tenant isolation and client-folder rules
@@ -375,7 +375,7 @@ archive/                    Retired client folders and retired catalog items (no
   README.md                 Inventory of all skills (inputs, reads, writes, stopping points)
   setup-application/        Skill: configure the application, or set it up from scratch when files are missing
   improve-process/          Skill: refine, plan, implement, and independently review a mechanism change
-  setup-client/             Skill: onboard a client from a handoff file and walk the Setup Ledger
+  setup-client/             Skill: onboard a client from whatever the operator provides, interviewing for the rest
   review-open-issues/       Skill: resolve one client's open issues into the decision log
   update-user/              Skill: add, edit, or retire a user and their client assignments
   setup-my-integrations/    Skill: connect one user's own external-system accounts
@@ -387,7 +387,7 @@ archive/                    Retired client folders and retired catalog items (no
 scripts/                    Deterministic verification and environment setup programs
   README.md                 Inventory of scripts and when to run them
   AGENTS.md                 Rules for scripts/
-  check.py                  Format, process, header, reference, handoff, and staged-diff linter
+  check.py                  Format, process, header, reference, and staged-diff linter
   setup-scripts.py          Configures and checks skill exposure for Claude, OpenAI, or Gemini
   tests/                    Regression tests for the scripts; not an inventoried script
 tmp/                        Git-ignored working directory for interstitial agent files, drafts, and reports

@@ -7,15 +7,15 @@ This repository is an AI-native application built on the 1 to 100 repeatable fac
 ## In Scope
 - Defining and running stage-by-stage business processes in `process/` governed by `formats/system/process.md`.
 - Enforcing structured Markdown schemas in `formats/system/` and `formats/clients/`.
-- Storing people, roles, client-role assignments, external-system guidance, the application backlog, and the question journal in `system/`.
+- Storing people, roles, client-role assignments, external-system guidance, the optional catalog of products and services the organization sells, the application backlog, and the question journal in `system/`.
 - Executing repeatable stage workflows through skills in `.agents/skills/` and verifying every change with `scripts/check.py`.
 - Evolving the application's mechanisms atomically through `improve-process`, and upgrading the repository to the current template paradigm through `upgrade-app`.
 
 ## Out of Scope
-- Upstream prospect discovery or external sales execution prior to a valid handoff file, unless added via `setup-application` or `improve-process`.
+- Upstream prospect discovery or external sales execution prior to a client being onboarded through `setup-client`, unless added via `setup-application` or `improve-process`.
 - Storing credentials, secrets, API tokens, or unredacted payment details.
 - Bespoke, unversioned chat workflows that leave no durable record in this repository.
-- Client business facts, commercial terms, contacts, or cross-client comparisons inside `system/`.
+- Client business facts, client-specific commercial terms, contacts, or cross-client comparisons inside `system/`.
 
 # Target AI Environment
 ## Vendor

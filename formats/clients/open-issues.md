@@ -1,4 +1,4 @@
-# Format: clients/open-issues (version 2)
+# Format: clients/open-issues (version 3)
 
 ## Purpose
 
@@ -10,7 +10,7 @@ Everything about a client or entity that is unresolved, missing, or unconfirmed,
 
 ## Header
 
-The client header defined in `formats/README.md` with `format: clients/open-issues`, `format_version: 2`, and `client` equal to the folder slug.
+The client header defined in `formats/README.md` with `format: clients/open-issues`, `format_version: 3`, and `client` equal to the folder slug.
 
 ## Body
 
@@ -44,7 +44,7 @@ Areas:
 | Display Name | Target Document |
 | --- | --- |
 | Client | `clients/<slug>/client.md` |
-| Entitlements | `clients/<slug>/client.md` (`# Entitlements`) |
+| Order Form | `clients/<slug>/order-form.md` |
 | Access | `clients/<slug>/client.md` (`# Notes` or connected services) |
 | Process | `clients/<slug>/` operational files |
 
@@ -52,7 +52,7 @@ Areas:
 
 ## Checks
 
-- Client header with `format: clients/open-issues`, `format_version: 2`, and `client` matching the folder name.
+- Client header with `format: clients/open-issues`, `format_version: 3`, and `client` matching the folder name.
 - `# Open` and `# Closed` sections are present in exact order, each containing either `None` or a Markdown table with the exact column headers above.
 - Every `#` ID is a positive integer and unique across both tables.
 - `Opened` and `Closed` are valid `YYYY-MM-DD` dates.

@@ -89,16 +89,72 @@ None
 # Solution
 None
 
-# Entitlements
-## Order Form
+# Notes
 None
+"""
+
+
+PRODUCT_BODY = """# Managed Onboarding
+## Overview
+Guided onboarding for new customers.
+## Specification
+Vendor provides guided onboarding. Weekly check-ins included.
+## Pricing Model
+Per Unit
+## Pricing Unit
+per month
+## List Price
+1500.00 USD
+## Frequency
+Monthly
+## Status
+Active
+"""
+
+ORDER_BODY = """# Order Details
+## Order Number
+OF-0001
+## Status
+Draft
 ## Plan Name
+Standard
+## Order Date
+2026-10-22
+## Effective Date
 None
-## Starts
+## Term End
 None
-## Renews
+## Renewal
+Auto-Renew
+
+# Parties
+## Customer Legal Name
+Acme Corporation
+## Customer Signatory
+- Name: Ada
+- Email: ada@example.com
+## Sales Representative
 None
-## Deliverables
+
+# Line Items
+| Product or Service | Specification | Quantity | Unit | Unit Price | Frequency |
+| --- | --- | --- | --- | --- | --- |
+| Managed Onboarding | Vendor provides guided onboarding. Weekly check-ins included. | 1 | per month | 1500.00 | Monthly |
+
+# Commercial Terms
+## Currency
+USD
+## Billing Contact
+None
+## Payment Terms
+Net 30
+## Discounts and Adjustments
+None
+
+# Execution
+## Signed Date
+None
+## Signed Copy
 None
 
 # Notes
@@ -207,11 +263,11 @@ None
     )
     write(
         repo / "clients" / "acme" / "client.md",
-        client_header("Acme", "clients/client", 2) + CLIENT_BODY,
+        client_header("Acme", "clients/client", 3) + CLIENT_BODY,
     )
     write(
         repo / "clients" / "acme" / "open-issues.md",
-        client_header("Acme — Open Issues", "clients/open-issues", 2)
+        client_header("Acme — Open Issues", "clients/open-issues", 3)
         + """# Open
 None
 
@@ -366,24 +422,63 @@ None
         result = run_check(self.repo, "--staged")
         self.assertIn("updated/updated_by did not change", result.stdout)
 
-    def test_handoff_requires_decision_chapter(self) -> None:
-        handoff = Path(self.temp.name) / "handoff.md"
-        write(handoff, client_header("Acme — Handoff", "clients/handoff", 2) + "# Client\nNone\n")
-        result = run_check(self.repo, "--handoff", str(handoff))
-        self.assertIn("Decision Log", result.stdout)
+    def test_removed_handoff_flag_is_not_special(self) -> None:
+        populate(self.repo)
+        result = run_check(self.repo, "--handoff", "x.md")
+        self.assertNotIn("handoff", result.stdout.lower())
 
-    def test_valid_handoff_passes(self) -> None:
-        shifted = ["#" + line if line.startswith("#") else line for line in CLIENT_BODY.splitlines()]
-        handoff = Path(self.temp.name) / "handoff.md"
+    def test_entitlements_section_is_rejected(self) -> None:
+        populate(self.repo)
+        path = self.repo / "clients" / "acme" / "client.md"
+        path.write_text(path.read_text(encoding="utf-8").replace("# Notes", "# Entitlements\nNone\n\n# Notes"), encoding="utf-8")
+        result = run_check(self.repo)
+        self.assertIn("# sections must be", result.stdout)
+
+    def test_catalog_is_optional_and_validated(self) -> None:
+        populate(self.repo)
+        write(self.repo / "system" / "products-and-services.md", system_header("Products and Services", "system/products-and-services") + PRODUCT_BODY)
+        readme = self.repo / "system" / "README.md"
+        readme.write_text(readme.read_text(encoding="utf-8").replace("| [`users.md`]", "| [`products-and-services.md`](products-and-services.md) | `system/products-and-services` | Catalog. |\n| [`users.md`]"), encoding="utf-8")
+        self.assertEqual(run_check(self.repo).returncode, 0)
+        path = self.repo / "system" / "products-and-services.md"
+        path.write_text(path.read_text(encoding="utf-8").replace("Monthly", "Fortnightly"), encoding="utf-8")
+        self.assertIn("is not in its vocabulary", run_check(self.repo).stdout)
+
+    def test_order_form_passes_and_resolves_catalog(self) -> None:
+        populate(self.repo)
+        write(self.repo / "system" / "products-and-services.md", system_header("Products and Services", "system/products-and-services") + PRODUCT_BODY)
+        readme = self.repo / "system" / "README.md"
+        readme.write_text(readme.read_text(encoding="utf-8").replace("| [`users.md`]", "| [`products-and-services.md`](products-and-services.md) | `system/products-and-services` | Catalog. |\n| [`users.md`]"), encoding="utf-8")
+        order = self.repo / "clients" / "acme" / "order-form.md"
+        write(order, client_header("Acme — Order Form", "clients/order-form", 1) + ORDER_BODY)
+        result = run_check(self.repo)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        order.write_text(order.read_text(encoding="utf-8").replace("Weekly check-ins included.", "Changed words."), encoding="utf-8")
+        self.assertIn("Specification differs from the catalog", run_check(self.repo).stdout)
+        order.write_text(order.read_text(encoding="utf-8").replace("Managed Onboarding |", "Unknown Thing |"), encoding="utf-8")
+        self.assertIn("is not in system/products-and-services.md", run_check(self.repo).stdout)
+
+    def test_signed_order_requires_signed_date(self) -> None:
+        populate(self.repo)
         write(
-            handoff,
-            client_header("Acme — Handoff", "clients/handoff", 2)
-            + "# Client\n"
-            + "\n".join(shifted)
-            + "\n# Open Issues\n## Open\nNone\n## Closed\nNone\n# Decision Log\n## Decisions\nNone\n",
+            self.repo / "clients" / "acme" / "order-form.md",
+            client_header("Acme — Order Form", "clients/order-form", 1) + ORDER_BODY.replace("## Status\nDraft", "## Status\nSigned"),
         )
-        result = run_check(self.repo, "--handoff", str(handoff))
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("required once status is Signed", run_check(self.repo).stdout)
+
+    def test_order_form_area_is_known(self) -> None:
+        populate(self.repo)
+        path = self.repo / "clients" / "acme" / "open-issues.md"
+        path.write_text(path.read_text(encoding="utf-8").replace("| Client |", "| Order Form |"), encoding="utf-8")
+        result = run_check(self.repo)
+        self.assertNotIn("is not a known area", result.stdout)
+
+    def test_entitlements_area_is_rejected(self) -> None:
+        populate(self.repo)
+        path = self.repo / "clients" / "acme" / "open-issues.md"
+        path.write_text(path.read_text(encoding="utf-8").replace("| Client |", "| Entitlements |"), encoding="utf-8")
+        result = run_check(self.repo)
+        self.assertIn("is not a known area", result.stdout)
 
 
 if __name__ == "__main__":

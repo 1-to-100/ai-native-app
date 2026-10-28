@@ -47,7 +47,7 @@ Assignment-specific operating context, or `None`. Notes contain no client busine
 - An `Active` assignment references an `Active` user, an `Active` role, a folder in `clients/<slug>/`, and `## Ended` of `None`.
 - An `Ended` assignment has a date in `## Ended`. Its client slug may resolve to `clients/<slug>/` or `archive/<slug>/`.
 - Client-specific work may read the assignment rows for the client being served. It does not list or describe assignments for other clients.
-- This file does not copy client identity, entitlements, contacts, deliverables, or decisions from `clients/<slug>/`.
+- This file does not copy client identity, order forms, contacts, deliverables, or decisions from `clients/<slug>/`.
 
 ## Vocabularies
 

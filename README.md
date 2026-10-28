@@ -23,7 +23,7 @@ tmp/                 git-ignored working folder for interstitial agent files, pr
 ## Starting points
 
 - Configure this repository, or set it up from scratch when required files are missing: `/setup-application`
-- Onboard a client or entity from a handoff file: `/setup-client <path-to-handoff.md>`
+- Onboard a client or entity by describing it, or pointing to notes and files: `/setup-client`
 - Add, edit, or retire a user and their client assignments: `/update-user`
 - Connect one user's external-system accounts: `/setup-my-integrations`
 - Teach a user the system and their role: `/train-me`
