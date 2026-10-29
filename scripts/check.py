@@ -32,7 +32,6 @@ SOR_MODES = {"Repository Markdown", "External System"}
 ISSUE_AREAS = {"Client", "Order Form", "Access", "Process"}
 USER_STATUSES = {"Active", "Retired"}
 ROLE_STATUSES = {"Active", "Retired"}
-ASSIGNMENT_STATUSES = {"Active", "Ended"}
 SYSTEM_CATEGORIES = {
     "Work Management",
     "CRM",
@@ -75,7 +74,6 @@ CLIENT_HEADER = [
 SYSTEM_FILES = {
     "users.md": "system/users",
     "user-roles.md": "system/user-roles",
-    "client-assignments.md": "system/client-assignments",
     "external-systems.md": "system/external-systems",
     "application-backlog.md": "system/application-backlog",
     "question-journal.md": "system/question-journal",
@@ -95,9 +93,8 @@ RESERVED = [
     "system/README.md",
     "system/AGENTS.md",
 ]
-USER_FIELDS = ["Name", "Primary Role", "Status", "Notes"]
+USER_FIELDS = ["Name", "Primary Role", "Assigned Clients", "Status", "Notes"]
 ROLE_FIELDS = ["Display Name", "Purpose", "Core Tasks", "Processes", "Skills", "Status"]
-ASSIGNMENT_FIELDS = ["User", "Role", "Client", "Status", "Started", "Ended", "Notes"]
 EXTERNAL_FIELDS = [
     "Display Name",
     "Category",
@@ -645,54 +642,17 @@ def lint_users(body: str, role_status: dict[str, str], findings: list[str], wher
             findings.append(f"ERROR {where} -> # {heading} -> ## Primary Role: unknown role {role!r}")
         elif got["Status"] == "Active" and role_status[role] != "Active":
             findings.append(f"ERROR {where} -> # {heading}: an Active user requires an Active primary role")
+        clients = bullets(got["Assigned Clients"], findings, f"{where} -> # {heading} -> ## Assigned Clients") or []
+        if len(set(clients)) != len(clients):
+            findings.append(f"ERROR {where} -> # {heading} -> ## Assigned Clients: duplicate client slug")
+        if clients and got["Status"] == "Retired":
+            findings.append(f"ERROR {where} -> # {heading}: a Retired user must have Assigned Clients of None")
+        for slug in clients:
+            if not SLUG_RE.match(slug):
+                findings.append(f"ERROR {where} -> # {heading} -> ## Assigned Clients: {slug!r} is not a client slug")
+            elif not (CLIENTS_DIR / slug).is_dir():
+                findings.append(f"ERROR {where} -> # {heading} -> ## Assigned Clients: clients/{slug}/ does not exist")
     return statuses
-
-
-def lint_assignments(
-    body: str, user_status: dict[str, str], role_status: dict[str, str], findings: list[str], where: str
-) -> None:
-    parsed = records(body, findings, where)
-    if not parsed:
-        return
-    seen: set[tuple[str, str]] = set()
-    for heading, subs in parsed.items():
-        if not re.fullmatch(r"A-\d{4}", heading):
-            findings.append(f"ERROR {where} -> # {heading}: assignment heading must look like A-0001")
-        got = fields_of(subs, ASSIGNMENT_FIELDS, findings, f"{where} -> # {heading}")
-        if got is None:
-            continue
-        user = got["User"]
-        role = got["Role"]
-        client = got["Client"]
-        status = got["Status"]
-        if user not in user_status:
-            findings.append(f"ERROR {where} -> # {heading} -> ## User: unknown user {user!r}")
-        if role not in role_status:
-            findings.append(f"ERROR {where} -> # {heading} -> ## Role: unknown role {role!r}")
-        if not SLUG_RE.match(client):
-            findings.append(f"ERROR {where} -> # {heading} -> ## Client: {client!r} is not a client slug")
-        if status not in ASSIGNMENT_STATUSES:
-            findings.append(f"ERROR {where} -> # {heading} -> ## Status: {status!r} is not an assignment status")
-        if not valid_date(got["Started"]):
-            findings.append(f"ERROR {where} -> # {heading} -> ## Started: must be YYYY-MM-DD")
-        client_dir = CLIENTS_DIR / client
-        archive_dir = ARCHIVE_DIR / client
-        if status == "Active":
-            if got["Ended"] != "None":
-                findings.append(f"ERROR {where} -> # {heading}: an Active assignment has Ended of None")
-            if user_status.get(user) == "Retired" or role_status.get(role) == "Retired":
-                findings.append(f"ERROR {where} -> # {heading}: an Active assignment cannot use a Retired user or role")
-            if not client_dir.is_dir():
-                findings.append(f"ERROR {where} -> # {heading} -> ## Client: clients/{client}/ does not exist")
-            pair = (user, client)
-            if pair in seen:
-                findings.append(f"ERROR {where} -> # {heading}: duplicate Active assignment for this user and client")
-            seen.add(pair)
-        elif status == "Ended":
-            if not valid_date(got["Ended"]):
-                findings.append(f"ERROR {where} -> # {heading} -> ## Ended: an Ended assignment needs YYYY-MM-DD")
-            if not client_dir.is_dir() and not archive_dir.is_dir():
-                findings.append(f"ERROR {where} -> # {heading} -> ## Client: {client!r} is not in clients/ or archive/")
 
 
 def lint_external(body: str, users: set[str], findings: list[str], where: str) -> None:
@@ -954,9 +914,6 @@ def lint_system(versions: dict[str, int], findings: list[str], headers: dict[str
         lint_products(body, findings, "system/products-and-services.md")
     role_status = lint_roles(bodies.get("user-roles.md", "None"), findings, "system/user-roles.md")
     user_status = lint_users(bodies.get("users.md", "None"), role_status, findings, "system/users.md")
-    lint_assignments(
-        bodies.get("client-assignments.md", "None"), user_status, role_status, findings, "system/client-assignments.md"
-    )
     lint_external(bodies.get("external-systems.md", "None"), set(user_status), findings, "system/external-systems.md")
     lint_backlog(bodies.get("application-backlog.md", "None"), findings, "system/application-backlog.md")
     if "question-journal.md" in bodies:

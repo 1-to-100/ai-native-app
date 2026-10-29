@@ -183,34 +183,16 @@ Active
     )
     write(
         repo / "system" / "users.md",
-        system_header("Users", "system/users")
+        system_header("Users", "system/users", 2)
         + f"""# {OPERATOR}
 ## Name
 Example Operator
 ## Primary Role
 operator
+## Assigned Clients
+- acme
 ## Status
 Active
-## Notes
-None
-""",
-    )
-    write(
-        repo / "system" / "client-assignments.md",
-        system_header("Client Assignments", "system/client-assignments")
-        + f"""# A-0001
-## User
-{OPERATOR}
-## Role
-operator
-## Client
-acme
-## Status
-Active
-## Started
-2026-10-22
-## Ended
-None
 ## Notes
 None
 """,
@@ -314,7 +296,7 @@ class CheckTests(unittest.TestCase):
 
     def test_system_header_rejects_client_key(self) -> None:
         path = self.repo / "system" / "users.md"
-        path.write_text(path.read_text(encoding="utf-8").replace("format_version: 1\n", "format_version: 1\nclient: acme\n"), encoding="utf-8")
+        path.write_text(path.read_text(encoding="utf-8").replace("format_version: 2\n", "format_version: 2\nclient: acme\n"), encoding="utf-8")
         result = run_check(self.repo)
         self.assertIn("header keys must be", result.stdout)
 
@@ -329,6 +311,20 @@ class CheckTests(unittest.TestCase):
         path.write_text(path.read_text(encoding="utf-8").replace("operator\n", "missing-role\n", 1), encoding="utf-8")
         result = run_check(self.repo)
         self.assertIn("unknown role", result.stdout)
+
+    def test_unknown_assigned_client_fails(self) -> None:
+        populate(self.repo)
+        path = self.repo / "system" / "users.md"
+        path.write_text(path.read_text(encoding="utf-8").replace("- acme\n", "- missing-client\n", 1), encoding="utf-8")
+        result = run_check(self.repo)
+        self.assertIn("does not exist", result.stdout)
+
+    def test_retired_user_with_assigned_clients_fails(self) -> None:
+        populate(self.repo)
+        path = self.repo / "system" / "users.md"
+        path.write_text(path.read_text(encoding="utf-8").replace("## Status\nActive", "## Status\nRetired", 1), encoding="utf-8")
+        result = run_check(self.repo)
+        self.assertIn("Retired user must have Assigned Clients of None", result.stdout)
 
     def test_closed_issue_requires_decision(self) -> None:
         populate(self.repo)

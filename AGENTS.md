@@ -7,7 +7,7 @@ This repository is an AI-native application built on the 1 to 100 repeatable fac
 ## In Scope
 - Defining and running stage-by-stage business processes in `process/` governed by `formats/system/process.md`.
 - Enforcing structured Markdown schemas in `formats/system/` and `formats/clients/`.
-- Storing people, roles, client-role assignments, external-system guidance, the optional catalog of products and services the organization sells, the application backlog, and the question journal in `system/`.
+- Storing people (with their assigned clients), roles, external-system guidance, the optional catalog of products and services the organization sells, the application backlog, and the question journal in `system/`.
 - Executing repeatable stage workflows through skills in `.agents/skills/` and verifying every change with `scripts/check.py`.
 - Evolving the application's mechanisms atomically through `improve-process`, and upgrading the repository to the current template paradigm through `upgrade-app`.
 
@@ -31,7 +31,7 @@ Optimized for Claude Code slash commands, fresh-context subagents for verificati
 1. Read `process/README.md`. When a domain process in `process/` governs the work, read that document for its stages, entry criteria, graduation criteria, branching paths, and where a stage stops. The skills that ship with this template carry those rules themselves.
 2. Read `.agents/skills/README.md` to see the inventory of skills before executing one. If a skill covers the stage, invoke it by name (`/setup-application`, `/setup-client`, `/improve-process`) rather than improvising the procedure by hand.
 3. Read `formats/README.md` and the governing format contract in `formats/system/` or `formats/clients/` for every document you will write or edit. The format contract is the single source of truth for that document's header, sections, and vocabularies.
-4. Read the nearest subtree `AGENTS.md` before editing files in that directory. During client-specific work, follow `system/AGENTS.md`: read users, roles, external-system guidance, and the assignment rows for the client being served.
+4. Read the nearest subtree `AGENTS.md` before editing files in that directory. During client-specific work, follow `system/AGENTS.md`: read users, roles, and external-system guidance, and treat a user's `## Assigned Clients` as the clients that user may serve.
 5. Read `scripts/README.md` before running a script.
 6. When bootstrapping, configuring, or restructuring the application, read `docs/build-any-ai-application.md`.
 
@@ -46,9 +46,9 @@ Optimized for Claude Code slash commands, fresh-context subagents for verificati
 - When a skill and a format disagree, the format wins; fix the skill. When a process and a skill disagree, the process states the business intent and the skill is brought to it—unless the format forbids it, in which case the format changes first or the process yields.
 
 # Never
-- Never delete a client folder, a catalog item, a prior plan, a built deliverable, a user, a role, an assignment, a backlog item, a journal row, or a closed issue. Retire a client folder by moving it to `archive/<slug>/` with an `ARCHIVED.md` note. Retire a person or role by status. End an assignment by status and date.
+- Never delete a client folder, a catalog item, a prior plan, a built deliverable, a user, a role, a backlog item, a journal row, or a closed issue. Retire a client folder by moving it to `archive/<slug>/` with an `ARCHIVED.md` note. Retire a person or role by status. Remove a client slug from a user's assigned clients to end that access.
 - Never remove or reword a row in a `# Decisions`, `# Closed`, or other history table. A reversal is a new row.
 - Never invent a fact, a metric, a quote, a reason to believe, a client reaction, or a commercial term. Write `None` and open an issue in `clients/<slug>/open-issues.md` when a client source is silent.
 - Never store credentials, API keys, passwords, or unredacted payment card or bank numbers anywhere in this repository.
 - Never let one client folder under `clients/<slug>/` reference, copy from, or compare against another client folder.
-- Never store a client business fact in `system/`. A client slug in `system/client-assignments.md` is routing metadata only.
+- Never store a client business fact in `system/`. A client slug in a user's `## Assigned Clients` is routing metadata only.

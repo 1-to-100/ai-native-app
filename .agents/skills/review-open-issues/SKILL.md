@@ -18,7 +18,7 @@ Use this skill before or during a client meeting to resolve rows on `clients/<sl
 - **No open issues.** `# Open` is `None`. Stop immediately.
 - **Unknown client.** The slug is not a folder under `clients/`. Stop and ask the operator to pick a listed slug.
 - Closing an issue writes the target document and the decision log in the same change.
-- Client work reads only this client's assignment rows from `system/client-assignments.md`.
+- Client work reads only this client's slug in the users' `## Assigned Clients` in `system/users.md`.
 
 ## Inputs
 
@@ -30,13 +30,13 @@ Use this skill before or during a client meeting to resolve rows on `clients/<sl
 
 - `formats/clients/open-issues.md`, `formats/clients/decision-log.md`, and `formats/clients/client.md`.
 - `clients/<slug>/open-issues.md`, `clients/<slug>/decision-log.md`, `clients/<slug>/client.md`, and the other files in that client folder.
-- Assignment rows in `system/client-assignments.md` whose client slug is this client, plus the named users and roles. Do not read assignment rows for other clients.
+- `system/users.md` entries assigned to this client slug, plus the named users and roles. Do not read other client slugs from user records.
 
 ## Procedure
 
 1. **Resolve the slug.** If `clients/<slug>/` does not exist, stop and list the available slugs.
 2. **Read the open list.** If `# Open` is `None`, stop and say there is nothing to review.
-3. **Present one issue.** For the next `# Open` row, quote the issue and its `Next Step`. Recommend a resolution only from facts already in this client folder or from an assignment row for this client. Cite the heading or section used. If the folder does not support a recommendation, say so and ask the operator. Do not invent a fact to fill the gap.
+3. **Present one issue.** For the next `# Open` row, quote the issue and its `Next Step`. Recommend a resolution only from facts already in this client folder or from a user assigned to this client. Cite the heading or section used. If the folder does not support a recommendation, say so and ask the operator. Do not invent a fact to fill the gap.
 4. **On accept or a revised answer.** Write the answer into the document named by `Area`. Move the issue row to `# Closed` with today's date and a `Resolution` that names the section written and the new decision-log row. Append one `# Decisions` row with the same `Area`, the decision, and `Source` of `open-issues #<id>`. Update `updated` and `updated_by` on each file. Run `python3 scripts/check.py <slug>`.
 5. **On defer.** Leave the row on `# Open`. Change `Next Step` only to the next step the operator stated.
 6. **Continue** until the operator stops or no open rows remain. Then run `python3 scripts/check.py`.
@@ -57,4 +57,4 @@ The operator has accepted or deferred each presented issue, or `# Open` is `None
 - Never invent a client fact, metric, or commercial term.
 - Never close an issue without the target write and the decision-log row in the same change.
 - Never delete or reword a closed issue or an existing decision.
-- Never read or mention another client's assignments or folder.
+- Never read or mention another client's assigned users or folder.

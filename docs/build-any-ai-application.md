@@ -155,7 +155,7 @@ An AI application in this framework is built from seven interlocking mechanisms.
 | **4** | **Subtree Agents** | `<dir>/AGENTS.md` | Defines local guardrails for agents working inside a specific directory (`process/`, `formats/`, `clients/`, `system/`, `docs/`). | Adds stricter rules for its folder; never relaxes the root `AGENTS.md`. |
 | **5** | **Skills** | `<skills-dir>/<name>/SKILL.md` | Defines the step-by-step procedure an agent runs when invoked to execute a stage of a process. | Operates strictly inside `AGENTS.md`, `process/`, and `formats/`. If a skill disagrees with a format, fix the skill. |
 | **6** | **Deterministic Scripts** | `scripts/*.py` (or `.ts`) | Enforces format schemas, reference resolution, header attribution, and skill links mechanically. | The automated gatekeeper. No skill run or commit is complete until `check.py` exits with zero errors. |
-| **7** | **Client, Catalog & System Data** | `clients/<slug>/`, catalogs, `system/` | Holds client records and the shared application records: users, roles, client assignments, external-system guidance, the application backlog, and the question journal. | Must conform 100% to `formats/` and pass `scripts/check.py` at all times. |
+| **7** | **Client, Catalog & System Data** | `clients/<slug>/`, catalogs, `system/` | Holds client records and the shared application records: users (with assigned clients), roles, external-system guidance, the application backlog, and the question journal. | Must conform 100% to `formats/` and pass `scripts/check.py` at all times. |
 
 ### 5.2. Global Context (Root `AGENTS.md`)
 
@@ -218,7 +218,7 @@ For example:
 * `formats/AGENTS.md` enforces the atomic migration rule: you never change a format without bumping `format_version`, updating every active document that uses that format, and updating `scripts/check.py` in the same commit.
 * `process/AGENTS.md` enforces that processes state business intent without duplicating format schemas or skill procedures, and that client-specific commercial overrides live in `clients/<slug>/client.md`, never in `process/`.
 * `clients/AGENTS.md` enforces strict tenant isolation: a client folder may never link to, copy from, or compare against another client folder.
-* `system/AGENTS.md` enforces the shared-data boundary: `system/` holds users, roles, assignment routing, external-system guidance, the backlog, and the question journal. An agent doing client-specific work may read users, roles, external-system guidance, and assignment rows for that client only, and never writes a client business fact into `system/`.
+* `system/AGENTS.md` enforces the shared-data boundary: `system/` holds users and assigned-client routing, roles, external-system guidance, the backlog, and the question journal. An agent doing client-specific work may read users, roles, external-system guidance, and the assigned-client entries for that client only, and never writes a client business fact into `system/`.
 
 ### 5.6. Skills (`<skills-dir>/<skill-name>/SKILL.md`)
 
@@ -258,9 +258,9 @@ Processes, formats, skills, and scripts are the machinery of your factory. Share
 
 ### 5.10. System Records (`system/`)
 
-The `system/` directory holds records shared by the whole application: users, operational roles, the role each user plays for a client, external-system guidance, the application backlog, and the question journal. `system/client-assignments.md` may name a client slug. It does not hold that client's business facts. `system/AGENTS.md` lets client-specific work read users, roles, external-system guidance, and the assignment rows for the client being served, and forbids writing client facts into `system/`.
+The `system/` directory holds records shared by the whole application: users, the clients each user is assigned, operational roles, external-system guidance, the application backlog, and the question journal. A user's `## Assigned Clients` in `system/users.md` may name a client slug. It does not hold that client's business facts. `system/AGENTS.md` lets client-specific work read users, roles, external-system guidance, and the assigned-client entry for the client being served, and forbids writing client facts into `system/`.
 
-The shared records are `system/users.md`, `system/user-roles.md`, `system/client-assignments.md`, `system/external-systems.md`, `system/application-backlog.md`, and the **Question Journal** (`system/question-journal.md`). Every question an agent asks the operator beyond the questions a skill's prompt explicitly requires is appended to the journal's `# Open` table with:
+The shared records are `system/users.md`, `system/user-roles.md`, `system/external-systems.md`, `system/application-backlog.md`, and the **Question Journal** (`system/question-journal.md`). Every question an agent asks the operator beyond the questions a skill's prompt explicitly requires is appended to the journal's `# Open` table with:
 
 * **Question** — The question exactly as it was asked.
 * **Skill** — The skill that was running when the question arose, or `—` when none applied.
@@ -284,7 +284,7 @@ Every repository built on this framework starts with the skills in `.agents/skil
 
 **How `setup-application` works:**
 1. **Reads the Blueprint:** Reads this governing document (`docs/build-any-ai-application.md`) and inspects the current repository state.
-2. **Routes the Request:** If the operator supplied a request, names the `system/` files it changes. A mechanism change is handed to `improve-process`. User and assignment changes are handed to `update-user`.
+2. **Routes the Request:** If the operator supplied a request, names the `system/` files it changes. A mechanism change is handed to `improve-process`. User and assigned-client changes are handed to `update-user`.
 3. **Scans When No Request Is Given:** Checks root `AGENTS.md` and the `README.md` and `AGENTS.md` files for `process/`, `formats/`, `.agents/skills/`, `scripts/`, `clients/`, and `system/`, plus every governed file in `system/`. Missing framework files are created in Global Context, Process, Format, Subtree Agent, Skill, then Script order. The root `AGENTS.md` conforms to `formats/system/global-context.md`. Processes conform to `formats/system/process.md`.
 4. **Interviews for External Systems:** Asks which systems agents should coordinate with, such as a tracker, CRM, email system, or calendar, and records them in `system/external-systems.md`.
 5. **Walks Shared Administration:** Walks the operator through the shared installation or administration those systems need before any individual user connects.
@@ -326,7 +326,7 @@ Every row in `system/question-journal.md` is a moment where the line stopped and
 
 These skills operate the shared records in `system/` and the client decision path:
 
-* `update-user` adds, edits, or retires a person and coordinates `system/users.md` with `system/client-assignments.md`.
+* `update-user` adds, edits, or retires a person and records each person's assigned clients in `system/users.md`.
 * `setup-my-integrations` walks one user through connecting their own accounts. It does not repeat the shared administration `setup-application` already completed, and it does not store secrets.
 * `train-me` teaches one user the application scope, their recorded role, the format concepts, the processes, and the operating rules those contracts depend on.
 * `add-to-backlog` records a later application change. `process-backlog` triages the whole backlog with the operator, then plans, implements through `improve-process`, reviews, closes, and commits each accepted item in turn.
@@ -363,9 +363,8 @@ clients/                    One isolated subfolder per client or entity (clients
 system/                     Application-wide shared records
   README.md                 Inventory of system records
   AGENTS.md                 Shared-data boundary and append-only rules for system/
-  users.md                  People who use the application, by email, and their primary role
+  users.md                  People who use the application, by email, with their primary role and assigned clients
   user-roles.md             Operational roles, with the processes, skills, and tasks of each role
-  client-assignments.md     Which user acts as which role for which client
   external-systems.md       External systems and how agents should coordinate with them
   application-backlog.md    Application changes held for later implementation
   question-journal.md       Questions asked beyond what a skill requires, and the change that absorbed each one
@@ -377,7 +376,7 @@ archive/                    Retired client folders and retired catalog items (no
   improve-process/          Skill: refine, plan, implement, and independently review a mechanism change
   setup-client/             Skill: onboard a client from whatever the operator provides, interviewing for the rest
   review-open-issues/       Skill: resolve one client's open issues into the decision log
-  update-user/              Skill: add, edit, or retire a user and their client assignments
+  update-user/              Skill: add, edit, or retire a user and their assigned clients
   setup-my-integrations/    Skill: connect one user's own external-system accounts
   train-me/                 Skill: teach a user the system, their role, and the operating contracts
   add-to-backlog/           Skill: capture a later application change

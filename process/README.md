@@ -14,7 +14,7 @@ Domain workflows for this repository. The skills that ship with the template car
 AGENTS.md        the Global Context and universal boundaries (highest authority)
 process/         domain workflows added for this business     (who, when, entry/graduation criteria, branches)
 formats/         what each document holds                    (the format wins on document structure)
-system/          application-wide shared records             (users, roles, assignments, integrations, backlog, journal)
+system/          application-wide shared records             (users and their assigned clients, roles, integrations, backlog, journal)
 .agents/skills/  how an agent executes the work              (shipped skills include their own stage rules)
 scripts/         what is enforced mechanically               (the lint)
 ```

@@ -17,9 +17,9 @@ This skill creates `clients/<slug>/` and interviews the operator until every req
 - **Graduation.** Every required field is written into its target document or recorded as an `# Open` row. Every `# Closed` row has a matching decision-log row. `clients/README.md` includes the client. `python3 scripts/check.py <slug>` passes with zero errors, and `tmp/setup-report-<slug>.md` is written.
 - **Onboarded.** The client folder is lint-clean and can enter the application's operational work.
 - **Slug taken.** `clients/<slug>/` or `archive/<slug>/` exists. Stop and ask for a different slug or hand off to `review-open-issues`.
-- **Retired later.** When an active client leaves, move the folder to `archive/<slug>/` with an `ARCHIVED.md` note, and end active assignments for that slug through `update-user`.
+- **Retired later.** When an active client leaves, move the folder to `archive/<slug>/` with an `ARCHIVED.md` note, and remove that slug from users' assigned clients through `update-user`.
 - Never create a client folder outside this skill.
-- Client work reads only this client's assignment rows from `system/client-assignments.md`.
+- Client work reads only this client's slug in the users' `## Assigned Clients` in `system/users.md`.
 
 ## Inputs
 

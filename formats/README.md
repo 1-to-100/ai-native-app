@@ -16,7 +16,6 @@ The format identifier is the contract path relative to `formats/` without `.md`.
 | [`system/users.md`](system/users.md) | `system/users.md` | System header | repository |
 | [`system/user-roles.md`](system/user-roles.md) | `system/user-roles.md` | System header | repository |
 | [`system/products-and-services.md`](system/products-and-services.md) | `system/products-and-services.md` (optional) | System header | repository |
-| [`system/client-assignments.md`](system/client-assignments.md) | `system/client-assignments.md` | System header | repository |
 | [`system/external-systems.md`](system/external-systems.md) | `system/external-systems.md` | System header | repository |
 | [`system/application-backlog.md`](system/application-backlog.md) | `system/application-backlog.md` | System header | repository |
 | [`system/question-journal.md`](system/question-journal.md) | `system/question-journal.md` | System header | repository |
@@ -93,9 +92,9 @@ A format may add `status` only when its Header section says so. Actor values (`c
 
 - **A format** is referenced by its namespaced identifier (`system/users`, `clients/open-issues`).
 - **A file** is referenced by its slug (the filename without `.md`) when the format says to use a slug. Paths are written out when the format asks for a repository path.
-- **A record inside a multi-record file** is referenced by its heading text exactly. User records are referenced by email. Role records are referenced by slug. Assignments are referenced by `A-NNNN`. Backlog items are referenced by `APP-NNNN`.
+- **A record inside a multi-record file** is referenced by its heading text exactly. User records are referenced by email. Role records are referenced by slug. Backlog items are referenced by `APP-NNNN`.
 - **A vocabulary value** is written as the Display Name exactly as the governing format's table lists it.
-- Client business documents never reference another client folder. `system/client-assignments.md` may store a client slug as routing metadata and nothing else about that client.
+- Client business documents never reference another client folder. `system/users.md` may store a client slug in a user's `## Assigned Clients` as routing metadata and nothing else about that client.
 
 ## What `scripts/check.py` enforces everywhere
 
@@ -106,6 +105,6 @@ A format may add `status` only when its Header section says so. Actor values (`c
 - System documents omit `client`. Client documents include `client`.
 - Body headings match the governing format in order and heading level.
 - Vocabulary values match Display Names from the governing format's tables.
-- References among users, roles, assignments, clients, processes, skills, external-system owners, backlog dependencies, issues, and decisions resolve.
+- References among users, roles, assigned clients, clients, processes, skills, external-system owners, backlog dependencies, issues, and decisions resolve.
 - Directory inventories (`docs/README.md`, `process/README.md`, `formats/README.md`, `system/README.md`, `.agents/skills/README.md`, `scripts/README.md`) match the files on disk in both directions.
 - In a staged git diff (`--staged`), `updated` and `updated_by` changed on every modified governed data document.

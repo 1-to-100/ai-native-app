@@ -50,7 +50,7 @@ Role Statuses:
 
 | Display Name | Meaning |
 | --- | --- |
-| Active | The role can be assigned as a primary role or a client assignment role. |
+| Active | The role can be assigned as a primary role. |
 | Retired | The role remains for history and cannot be newly assigned. |
 
 ## Checks
