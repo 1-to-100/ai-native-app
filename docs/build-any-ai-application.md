@@ -329,7 +329,7 @@ These skills operate the shared records in `system/` and the client decision pat
 * `update-user` adds, edits, or retires a person and records each person's assigned clients in `system/users.md`.
 * `setup-my-integrations` walks one user through connecting their own accounts. It does not repeat the shared administration `setup-application` already completed, and it does not store secrets.
 * `train-me` teaches one user the application scope, their recorded role, the format concepts, the processes, and the operating rules those contracts depend on.
-* `add-to-backlog` records a later application change. `process-backlog` triages the whole backlog with the operator, then plans, implements through `improve-process`, reviews, closes, and commits each accepted item in turn.
+* `add-to-backlog` interviews the operator until the request is fully specified, then records it as a later application change with a typed request. `process-backlog` triages the whole backlog with the operator, then plans, implements through `improve-process`, reviews, closes, and commits each accepted item in turn.
 * `review-open-issues` walks one client's open issues and, on acceptance, writes the answer and the decision log together.
 * `upgrade-app` compares this repository with the template at `https://github.com/1-to-100/ai-native-app`, writes a step-by-step upgrade plan under `docs/upgrades/`, and reviews the result in a fresh context.
 

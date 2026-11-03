@@ -162,6 +162,40 @@ None
 """
 
 
+BACKLOG_REQUEST = """### Statement
+Keep this for later.
+### Problem and Trigger
+Something is missing.
+### Desired Outcome
+It works and can be checked.
+### In Scope
+The example change.
+### Out of Scope
+None
+### Mechanisms and Records Affected
+One skill.
+### Constraints
+None
+### Why Held
+None
+### Open Points
+None
+"""
+
+
+def backlog_row(heading: str, status: str, request: str = BACKLOG_REQUEST, dependencies: str = "None") -> str:
+    later = "None" if status == "Proposed" else "Something concrete."
+    return (
+        f"# {heading}\n## Title\nExample\n## Status\n{status}\n## Opened\n2026-10-22\n"
+        f"## Request\n{request}## Refined Requirement\n{later}\n## Acceptance Criteria\n{later}\n"
+        f"## Plan\n{later}\n## Dependencies\n{dependencies}\n## Resolution\nNone\n"
+    )
+
+
+def backlog_file(*rows: str) -> str:
+    return system_header("Application Backlog", "system/application-backlog", 2) + "\n".join(rows)
+
+
 def populate(repo: Path) -> None:
     write(
         repo / "system" / "user-roles.md",
@@ -221,27 +255,7 @@ The user approves the connection in the agent environment.
     )
     write(
         repo / "system" / "application-backlog.md",
-        system_header("Application Backlog", "system/application-backlog")
-        + """# APP-0001
-## Title
-Hold an example
-## Status
-Proposed
-## Opened
-2026-10-22
-## Request
-Keep this for later.
-## Refined Requirement
-None
-## Acceptance Criteria
-None
-## Plan
-None
-## Dependencies
-None
-## Resolution
-None
-""",
+        backlog_file(backlog_row("APP-0001", "Proposed")),
     )
     write(
         repo / "clients" / "acme" / "client.md",
@@ -339,50 +353,35 @@ class CheckTests(unittest.TestCase):
         populate(self.repo)
         write(
             self.repo / "system" / "application-backlog.md",
-            system_header("Application Backlog", "system/application-backlog")
-            + """# APP-0001
-## Title
-First
-## Status
-Proposed
-## Opened
-2026-10-22
-## Request
-First request.
-## Refined Requirement
-None
-## Acceptance Criteria
-None
-## Plan
-None
-## Dependencies
-- APP-0002
-## Resolution
-None
-
-# APP-0002
-## Title
-Second
-## Status
-Proposed
-## Opened
-2026-10-22
-## Request
-Second request.
-## Refined Requirement
-None
-## Acceptance Criteria
-None
-## Plan
-None
-## Dependencies
-- APP-0001
-## Resolution
-None
-""",
+            backlog_file(
+                backlog_row("APP-0001", "Proposed", dependencies="- APP-0002"),
+                backlog_row("APP-0002", "Proposed", dependencies="- APP-0001"),
+            ),
         )
         result = run_check(self.repo)
         self.assertIn("cycle", result.stdout)
+
+    def test_backlog_request_missing_subsection_fails(self) -> None:
+        populate(self.repo)
+        request = BACKLOG_REQUEST.replace("### Constraints\nNone\n", "")
+        write(self.repo / "system" / "application-backlog.md", backlog_file(backlog_row("APP-0001", "Proposed", request)))
+        result = run_check(self.repo)
+        self.assertIn("## Request", result.stdout)
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_backlog_required_request_subsection_cannot_be_none(self) -> None:
+        populate(self.repo)
+        request = BACKLOG_REQUEST.replace("### Desired Outcome\nIt works and can be checked.\n", "### Desired Outcome\nNone\n")
+        write(self.repo / "system" / "application-backlog.md", backlog_file(backlog_row("APP-0001", "Proposed", request)))
+        result = run_check(self.repo)
+        self.assertIn("### Desired Outcome: required and cannot be None", result.stdout)
+
+    def test_backlog_ready_item_with_open_points_fails(self) -> None:
+        populate(self.repo)
+        request = BACKLOG_REQUEST.replace("### Open Points\nNone\n", "### Open Points\n- Who owns it?\n")
+        write(self.repo / "system" / "application-backlog.md", backlog_file(backlog_row("APP-0001", "Ready", request)))
+        result = run_check(self.repo)
+        self.assertIn("### Open Points: must be None once status is Ready", result.stdout)
 
     def test_stale_inventory_link_fails(self) -> None:
         readme = self.repo / "formats" / "README.md"

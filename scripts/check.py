@@ -139,6 +139,24 @@ BACKLOG_FIELDS = [
     "Dependencies",
     "Resolution",
 ]
+BACKLOG_REQUEST_FIELDS = [
+    "Statement",
+    "Problem and Trigger",
+    "Desired Outcome",
+    "In Scope",
+    "Out of Scope",
+    "Mechanisms and Records Affected",
+    "Constraints",
+    "Why Held",
+    "Open Points",
+]
+BACKLOG_REQUIRED_REQUEST_FIELDS = [
+    "Statement",
+    "Problem and Trigger",
+    "Desired Outcome",
+    "In Scope",
+    "Mechanisms and Records Affected",
+]
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -807,8 +825,21 @@ def lint_backlog(body: str, findings: list[str], where: str) -> None:
         got = fields_of(subs, BACKLOG_FIELDS, findings, f"{where} -> # {heading}")
         if got is None:
             continue
-        if got["Title"] == "None" or got["Request"] == "None":
-            findings.append(f"ERROR {where} -> # {heading}: Title and Request are required")
+        if got["Title"] == "None":
+            findings.append(f"ERROR {where} -> # {heading}: Title is required")
+        request_where = f"{where} -> # {heading} -> ## Request"
+        open_points = "None"
+        if not got["Request"].startswith("### Statement"):
+            findings.append(f"ERROR {request_where}: must open directly with '### Statement'")
+        request = fields_of(parse_sections(got["Request"], 3), BACKLOG_REQUEST_FIELDS, findings, request_where)
+        if request is not None:
+            for name in BACKLOG_REQUIRED_REQUEST_FIELDS:
+                if request[name] == "None":
+                    findings.append(f"ERROR {request_where} -> ### {name}: required and cannot be None")
+            bullets(request["Open Points"], findings, f"{request_where} -> ### Open Points")
+            open_points = request["Open Points"]
+        if got["Status"] in {"Ready", "In Progress"} and open_points != "None":
+            findings.append(f"ERROR {request_where} -> ### Open Points: must be None once status is {got['Status']}")
         if got["Status"] not in BACKLOG_STATUSES:
             findings.append(f"ERROR {where} -> # {heading} -> ## Status: {got['Status']!r} is not a backlog status")
         if not valid_date(got["Opened"]):
