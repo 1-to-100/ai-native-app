@@ -1,10 +1,10 @@
 ---
 title: User Roles
 format: system/user-roles
-format_version: 1
+format_version: 2
 created: 2026-10-22
 created_by: springer@1to100.com
-updated: 2026-10-28
+updated: 2026-11-04
 updated_by: springer@1to100.com
 ---
 
@@ -25,6 +25,7 @@ None
 - update-user
 - review-question-journal
 - add-to-backlog
+- whats-next
 ## Status
 Active
 
@@ -38,7 +39,8 @@ Develop customer proposals from the product and service catalog; prepare and agr
 ## Processes
 None
 ## Skills
-None
+- whats-next
+- client-status
 ## Status
 Active
 
@@ -56,5 +58,7 @@ None
 - review-open-issues
 - setup-my-integrations
 - train-me
+- whats-next
+- client-status
 ## Status
 Active

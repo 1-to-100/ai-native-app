@@ -3,6 +3,7 @@
 This directory holds application-wide data shared across the repository. Every governed file here conforms to a contract in `formats/system/`.
 
 - `system/` may store people, roles, external-system guidance, the optional products and services catalog, the application backlog, and the question journal.
+- Roles are groups of people who do the same work, not job titles. Fewer, well-defined roles are better: the application does not need a role for every title, and a new role is added only when no existing role can own the work. A role slug is what a process stage's `#### Owner` and a process's `## Supervisor Role` name.
 - `system/users.md` may store, in each user's `## Assigned Clients`, client slugs as routing metadata. It must not store client business facts, commercial terms, contacts, deliverables, order forms, decisions, or comparisons between clients.
 - An agent doing client-specific work may read `system/users.md`, `system/user-roles.md`, and `system/external-systems.md`, and only the assigned-client entries that equal the client being served. It does not read or recite other client slugs from a user record.
 - `system/products-and-services.md` describes what the organization sells in general. It names no client and holds no price negotiated for one client.

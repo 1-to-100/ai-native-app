@@ -30,7 +30,7 @@ If a decision only exists in a chat thread, a Slack message, or a meeting transc
 
 ### 2.4. Grounding Over Invention
 
-Left alone, an LLM will happily invent a metric, a customer quote, or a contract term just to make a template look finished. In a business application, hallucination is poison. The rule on our line is absolute: never invent a fact, a reason to believe, a signature phrase, a client reaction, or a commercial term. Every claim requires a source. When a source is silent or two sources disagree, the agent writes `None` in the field and opens a tracked row in `open-issues.md` naming who must supply the answer and what the next step is.
+Left alone, an LLM will happily invent a metric, a customer quote, or a contract term just to make a template look finished. In a business application, hallucination is poison. The rule on our line is absolute: never invent a fact, a reason to believe, a signature phrase, a client reaction, or a commercial term. Every claim requires a source. When a source is silent or two sources disagree, the agent writes `None` in the field and opens a tracked row in the `# Open` table of `open-items.md` naming who must supply the answer and what the next step is.
 
 ### 2.5. History Is Append-Only; Nothing Is Deleted
 
@@ -38,7 +38,7 @@ You never delete a client folder, a catalog item, a past plan, a built deliverab
 
 ### 2.6. A Stage Is Governed by a Process Document, and Every Stage Is Small Enough to Hand Off
 
-You do not ask an agent to "run marketing" or "manage onboarding" in one giant prompt. Every workflow is broken down in a governing process document under `process/` into discrete stages—the same way we break a software product into atomic features mapped to detailed personas and clear outcomes. Each stage declares its entry criteria, what happens inside the stage, its graduation criteria, and where the path branches. And each stage is sized so a fresh agent can read the inputs, execute the skill for that stage, stop at a real stopping point, and hand off a clean artifact to the next station on the line.
+You do not ask an agent to "run marketing" or "manage onboarding" in one giant prompt. Every workflow is broken down in a governing process section inside a lifecycle stage file under `process/` into discrete stages—the same way we break a software product into atomic features mapped to detailed personas and clear outcomes. Each stage declares its entry criteria, the role or Automation that owns it, what happens inside the stage, its graduation criteria, and where the path branches. And each stage is sized so a fresh agent can read the inputs, execute the skill for that stage, stop at a real stopping point, and hand off a clean artifact to the next station on the line.
 
 ### 2.7. One Agent Does the Work, One Checks It
 
@@ -150,7 +150,7 @@ An AI application in this framework is built from seven interlocking mechanisms.
 | Order | Mechanism | Location | Role on the Factory Line | Precedence Rule |
 | --- | --- | --- | --- | --- |
 | **1** | **Global Context** | Root `AGENTS.md` | Defines what the application is, what is out of scope, the target AI environment, and the rules that apply everywhere. | Governs the entire repository. No nested file, process, or skill may violate it. |
-| **2** | **Processes** | `process/*.md` | Defines the business workflows stage by stage: entry criteria, stage work, graduation criteria, branching paths, system of record, and implementing skills. | States business intent. Governs what skills must do, subject to the data structures allowed by Formats. |
+| **2** | **Processes** | `process/*.md` | Lifecycle stage files that define the business workflows stage by stage: entry criteria, stage owner (a role or an Automation), stage work, graduation criteria, branching paths, system of record, supervisor role, and implementing skills. | States business intent. Governs what skills must do, subject to the data structures allowed by Formats. |
 | **3** | **Formats** | `formats/system/*.md` and `formats/clients/*.md` | Defines the exact schema—headers, sections, vocabularies, and rules—for every document type in the repository. | **The format wins over skills and processes** on what a document holds. If a process needs a new field, update the format first. |
 | **4** | **Subtree Agents** | `<dir>/AGENTS.md` | Defines local guardrails for agents working inside a specific directory (`process/`, `formats/`, `clients/`, `system/`, `docs/`). | Adds stricter rules for its folder; never relaxes the root `AGENTS.md`. |
 | **5** | **Skills** | `<skills-dir>/<name>/SKILL.md` | Defines the step-by-step procedure an agent runs when invoked to execute a stage of a process. | Operates strictly inside `AGENTS.md`, `process/`, and `formats/`. If a skill disagrees with a format, fix the skill. |
@@ -166,7 +166,7 @@ In our framework, the root `AGENTS.md` is governed by `formats/system/global-con
 2. **`# Scope and Out of Scope`** — Two explicit subsections (`## In Scope` and `## Out of Scope`) drawing a hard boundary around what belongs in this repository versus what happens upstream, downstream, or in external systems.
 3. **`# Target AI Environment`** — Names the single AI vendor environment this repository is optimized for (`Claude`, `OpenAI`, or `Gemini`), how skills are invoked in that environment, and which native capabilities (like Claude Artifacts, Codex terminal workflows, or Gemini workspace tools) the application uses. This choice also fixes the skills directory. This document writes that directory as the placeholder `<skills-dir>/`; the final path is resolved per target AI environment in the table in Section 7.2.
 4. **`# Before You Act`** — The mandatory reading sequence every agent follows before touching a file:
-   1. Read `process/README.md`. Read a process document in `process/` when one governs the work. The skills that ship with the template carry their own stage rules.
+   1. Read `process/README.md`. Read the process section in the lifecycle stage file under `process/` when one governs the work. The skills that ship with the template carry their own stage rules.
    2. Read `<skills-dir>/README.md` and invoke the matching skill by name rather than improvising.
    3. Read `formats/README.md` and the governing format contract in `formats/` before writing or editing any document.
    4. Read `scripts/README.md` before running verification scripts.
@@ -175,27 +175,28 @@ In our framework, the root `AGENTS.md` is governed by `formats/system/global-con
 
 ### 5.3. Process Definitions (`process/` and `formats/system/process.md`)
 
-Before you design a database table or write an agent prompt, you have to define how the work actually moves through your business. The skills that ship with this template already carry that definition for setup, upgrade, improvement, client onboarding, issue review, users, integrations, training, the backlog, and the question journal. A workflow added for the business gets its own file in `process/<slug>.md`, governed by the default process format at `formats/system/process.md` and indexed in `process/README.md`.
+Before you design a database table or write an agent prompt, you have to define how the work actually moves through your business. The skills that ship with this template already carry that definition for setup, upgrade, improvement, client onboarding, issue review, users, integrations, training, the backlog, and the question journal. Workflows added for the business are grouped into **lifecycle stage files**: one file per customer lifecycle stage at the root of `process/`, such as `marketing.md`, `sales.md`, `onboarding.md`, `account-management.md`, or `delivery.md`. Lifecycle stages are optional and named however the operator decides. Each file opens with `# Lifecycle Stage: <slug> (version N)` and holds one or more `# <Process Name>` sections, each a core activity of that lifecycle stage, governed by `formats/system/process.md` and indexed in `process/README.md`. A process name is unique across `process/` and is how roles, the question journal, and each client's `open-items.md` refer to it.
 
-Every process document follows a strict, machine-checked structure built around discrete, handoff-sized stages:
+Every process section follows a strict, machine-checked structure built around discrete, handoff-sized stages:
 
-* **`# Purpose`** — What the process achieves.
-* **`# Scope`** — Where the process's boundaries start and stop.
-* **`# Roles`** — Which human roles (e.g., `Operator`, `Client`, `Reviewer`) take part.
-* **`# Cadence`** — What triggers the process or how often it runs.
-* **`# System of Record`** — Declares where the state of items moving through this process is modeled:
-  * **`Repository Markdown`** when items are tracked natively as Markdown files in this repository (naming the directory and governing formats, such as `clients/<slug>/`).
+* **`## Purpose`** — What the process achieves.
+* **`## Scope`** — Where the process's boundaries start and stop.
+* **`## Supervisor Role`** — The one role in `system/user-roles.md` responsible for checking that the process is executed properly. The supervisor checks; the stage owners do the work.
+* **`## Cadence`** — What triggers the process or how often it runs.
+* **`## System of Record`** — Declares where the state of items moving through this process is modeled:
+  * **`Repository Markdown`** when items are tracked natively as Markdown files in this repository (naming the directory and governing formats, such as `clients/<slug>/`). Each client's run is an `# In Flight` row in `clients/<slug>/open-items.md`.
   * **`External System`** when state lives in an external tracker like Jira, Linear, HubSpot, or Salesforce—including the direct URL to that system and how repository artifacts link to external ticket or record IDs.
-* **`# Inputs`** — The exact documents, contracts, or external signals required to start.
-* **`# Stages`** — The stage-by-stage factory line. Each stage is a `## Stage N: <Stage Name>` section containing five required fields:
-  * **`### Entry Criteria`** — What must be true and which files or approvals must exist before work can enter this stage.
-  * **`### Description`** — What happens in this stage, who owns it, and what decisions are made.
-  * **`### Graduation Criteria`** — The exact proof, `check.py` validation, or human approval required to mark the stage complete and hand off to the next stage.
-  * **`### Branching and Terminal Paths`** — Where work goes when it does not move straight to the next stage. Real business processes branch: a deal moves to `Closed Won` or `Closed Lost`; a proposed deliverable is `Approved`, `Rejected`, or `Deferred`; an onboarding check passes or returns to upstream. Every valid branch and terminal state is named here explicitly.
-  * **`### Implementing Skills`** — For processes modeled in repository Markdown, names the exact skill (or set of skills) in `<skills-dir>/` that executes this stage, or states `Manual (Gap)` when a person still performs the stage by hand under `AGENTS.md` and the governing format.
-* **`# Outputs`** — What exists when the process finishes.
-* **`# Rules`** — The defaults and `Never` rules for this workflow.
-* **`# Related`** — The linked formats, skills, scripts, and open gaps.
+* **`## Inputs`** — The exact documents, contracts, or external signals required to start.
+* **`## Stages`** — The stage-by-stage factory line. Each stage is a `### Stage N: <Stage Name>` section containing six required fields:
+  * **`#### Entry Criteria`** — What must be true and which files or approvals must exist before work can enter this stage.
+  * **`#### Owner`** — Who owns the stage. Either a list of role slugs from `system/user-roles.md`, where the first role owns the stage (its users are the default assignees) and later roles are backups the owner coordinates outside the system; or an **Automation**: `Automation: On-Demand` or `Automation: Recurring (<schedule>)`. An Automation is a standardized, agent-executable approach to the stage that needs no human interaction; the agent runs it on request, or on the written schedule as a scheduled task in the agent environment. An Automation stage always names an implementing skill.
+  * **`#### Description`** — What happens in this stage and what decisions are made.
+  * **`#### Graduation Criteria`** — The exact proof, `check.py` validation, or human approval required to mark the stage complete and hand off to the next stage.
+  * **`#### Branching and Terminal Paths`** — Where work goes when it does not move straight to the next stage. Real business processes branch: a deal moves to `Closed Won` or `Closed Lost`; a proposed deliverable is `Approved`, `Rejected`, or `Deferred`; an onboarding check passes or returns to upstream. Every valid branch and terminal state is named here explicitly.
+  * **`#### Implementing Skills`** — For processes modeled in repository Markdown, names the exact skill (or set of skills) in `<skills-dir>/` that executes this stage, or states `Manual (Gap)` when a person still performs the stage by hand under `AGENTS.md` and the governing format.
+* **`## Outputs`** — What exists when the process finishes.
+* **`## Rules`** — The defaults and `Never` rules for this workflow.
+* **`## Related`** — The linked formats, skills, scripts, and open gaps.
 
 ### 5.4. Format Contracts (`formats/`)
 
@@ -253,12 +254,12 @@ Processes, formats, skills, and scripts are the machinery of your factory. Share
 * `client.md` is the single source of truth for who the client is, and `order-form.md` (when the client has ordered products or services) is the single source of truth for what the client is owed and on what frequency. No other file restates those facts.
 * Domain foundation documents (such as personas, topics, style guides, or requirements) hold the grounded context for that client.
 * Active operational files (such as `current-plan.md`, `prior-plans/<YYYY-MM-DD>.md`, and produced deliverables) track the work moving through the stages defined in `process/`.
-* `open-issues.md` holds every unresolved question or missing fact (`# Open` and `# Closed` tables), linked by `Area` to the exact document where the answer will land once resolved. Closing an issue requires writing the answer into that target document in the same commit.
+* `open-items.md` holds two queues. `# In Flight` and `# Completed` track every run of a process from `process/` for this client: the process, its current stage, the responsible party (the owning role, the user who took it on, or `Automation`), and status notes. `# Open` and `# Closed` hold every unresolved question or missing fact, linked by `Area` to the exact document where the answer will land once resolved. Closing an issue requires writing the answer into that target document in the same commit. `whats-next` matches in-flight steps to a user's role and takes them on; `client-status` reports everything in flight for one client.
 * `decision-log.md` is the single, central log of every decision made for this client. It replaces any file-specific `# Decisions` section; no other document in the client folder keeps its own decisions table. Rows are append-only, and a reversal is a new dated row. Before an agent asks the operator a question during client work, it has a subagent read `decision-log.md` first: if an existing decision answers the question or gives enough confidence to decide, the agent proceeds on that decision and cites it rather than asking.
 
 ### 5.10. System Records (`system/`)
 
-The `system/` directory holds records shared by the whole application: users, the clients each user is assigned, operational roles, external-system guidance, the application backlog, and the question journal. A user's `## Assigned Clients` in `system/users.md` may name a client slug. It does not hold that client's business facts. `system/AGENTS.md` lets client-specific work read users, roles, external-system guidance, and the assigned-client entry for the client being served, and forbids writing client facts into `system/`.
+The `system/` directory holds records shared by the whole application: users, the clients each user is assigned, operational roles, external-system guidance, the application backlog, and the question journal. Roles are groups of people who do the same work, not job titles: fewer, well-defined roles are better, the application does not need a role for every title, and a new role is added only when no existing role can own the work. Process stages name roles as owners and backups, and each process names a supervisor role. A user's `## Assigned Clients` in `system/users.md` may name a client slug. It does not hold that client's business facts. `system/AGENTS.md` lets client-specific work read users, roles, external-system guidance, and the assigned-client entry for the client being served, and forbids writing client facts into `system/`.
 
 The shared records are `system/users.md`, `system/user-roles.md`, `system/external-systems.md`, `system/application-backlog.md`, and the **Question Journal** (`system/question-journal.md`). Every question an agent asks the operator beyond the questions a skill's prompt explicitly requires is appended to the journal's `# Open` table with:
 
@@ -305,8 +306,8 @@ Whenever your application manages clients, customers, deals, or projects, you ne
 
 **How `setup-client` works:**
 1. **Intake:** Takes whatever the operator provides (pasted text, notes, files, or nothing), asks for the client slug, and stops if `clients/<slug>/` or `archive/<slug>/` already exists.
-2. **Mechanical Scaffolding and Setup Ledger:** Creates `clients/<slug>/`, writes what the operator supplied into the format-governed documents (`client.md`, `open-issues.md`, `decision-log.md`, and any domain files your application defines) with standard YAML headers stamped with your operator email, and opens a running **Setup Ledger**. Every section written as `None`, every placeholder value, every required field the operator has not yet answered, and every `check.py` warning is added to the Setup Ledger with its `Area`, `Evidence`, and a `Recommended Approach`—never a guessed fact.
-3. **Interview and Ledger Walk:** Interviews you for each blank required field and walks the Setup Ledger with you in chat, one entry at a time. When you accept a recommendation or supply an answer, the skill writes it into the target document, moves the issue to `# Closed` in `open-issues.md`, and appends the decision to `decision-log.md`. When you defer an item (because only the client can answer it), the skill ensures an open row exists in `open-issues.md` with a concrete `Next Step`.
+2. **Mechanical Scaffolding and Setup Ledger:** Creates `clients/<slug>/`, writes what the operator supplied into the format-governed documents (`client.md`, `open-items.md`, `decision-log.md`, and any domain files your application defines) with standard YAML headers stamped with your operator email, and opens a running **Setup Ledger**. Every section written as `None`, every placeholder value, every required field the operator has not yet answered, and every `check.py` warning is added to the Setup Ledger with its `Area`, `Evidence`, and a `Recommended Approach`—never a guessed fact.
+3. **Interview and Ledger Walk:** Interviews you for each blank required field and walks the Setup Ledger with you in chat, one entry at a time. When you accept a recommendation or supply an answer, the skill writes it into the target document, moves the issue to `# Closed` in `open-items.md`, and appends the decision to `decision-log.md`. When you defer an item (because only the client can answer it), the skill ensures an open row exists in `open-items.md` with a concrete `Next Step`.
 4. **Verification and Report:** Runs `python3 scripts/check.py <slug>` after every write, saves the complete ledger record to `tmp/setup-report-<slug>.md` (uncommitted), and stops with a lint-clean client folder ready for commit.
 
 ### 6.4. `review-question-journal` — Turning Questions into Fewer Questions
@@ -330,7 +331,9 @@ These skills operate the shared records in `system/` and the client decision pat
 * `setup-my-integrations` walks one user through connecting their own accounts. It does not repeat the shared administration `setup-application` already completed, and it does not store secrets.
 * `train-me` teaches one user the application scope, their recorded role, the format concepts, the processes, and the operating rules those contracts depend on.
 * `add-to-backlog` interviews the operator until the request is fully specified, then records it as a later application change with a typed request. `process-backlog` triages the whole backlog with the operator, then plans, implements through `improve-process`, reviews, closes, and commits each accepted item in turn.
-* `review-open-issues` walks one client's open issues and, on acceptance, writes the answer and the decision log together.
+* `review-open-issues` walks one client's open issues (the `# Open` queue of `open-items.md`) and, on acceptance, writes the answer and the decision log together.
+* `whats-next` reads a user's role and assigned clients, lists the in-flight process steps whose current stage that role owns or backs up, assigns the ones the user takes on, and walks each to its graduation criteria.
+* `client-status` reports everything in flight, open, and recently completed for one client from its `open-items.md`.
 * `upgrade-app` compares this repository with the template at `https://github.com/1-to-100/ai-native-app`, writes a step-by-step upgrade plan under `docs/upgrades/`, and reviews the result in a fresh context.
 
 ---
@@ -349,9 +352,9 @@ docs/                       General repository documentation not covered elsewhe
   README.md                 Inventory of docs/
   AGENTS.md                 Rules for docs/
   build-any-ai-application.md  This master governing blueprint
-process/                    Domain workflows added for this business
-  README.md                 Inventory of processes and shared role vocabulary
-  AGENTS.md                 Rules for writing and versioning process documents
+process/                    Lifecycle stage files holding the business processes (for example sales.md, delivery.md)
+  README.md                 Inventory of lifecycle stages and processes, and how stage ownership works
+  AGENTS.md                 Rules for writing and versioning lifecycle stage files
 formats/                    Format contracts (schemas) for every governed Markdown document
   README.md                 Shared header, body, reference, and naming conventions + format inventory
   AGENTS.md                 Rules for changing formats and bumping format_version atomically
@@ -364,7 +367,7 @@ system/                     Application-wide shared records
   README.md                 Inventory of system records
   AGENTS.md                 Shared-data boundary and append-only rules for system/
   users.md                  People who use the application, by email, with their primary role and assigned clients
-  user-roles.md             Operational roles, with the processes, skills, and tasks of each role
+  user-roles.md             Operational roles (kept few), with the processes, skills, and tasks of each role
   external-systems.md       External systems and how agents should coordinate with them
   application-backlog.md    Application changes held for later implementation
   question-journal.md       Questions asked beyond what a skill requires, and the change that absorbed each one
@@ -376,6 +379,8 @@ archive/                    Retired client folders and retired catalog items (no
   improve-process/          Skill: refine, plan, implement, and independently review a mechanism change
   setup-client/             Skill: onboard a client from whatever the operator provides, interviewing for the rest
   review-open-issues/       Skill: resolve one client's open issues into the decision log
+  whats-next/               Skill: find and take on the in-flight process steps that match a user's role
+  client-status/            Skill: report everything in flight and open for one client
   update-user/              Skill: add, edit, or retire a user and their assigned clients
   setup-my-integrations/    Skill: connect one user's own external-system accounts
   train-me/                 Skill: teach a user the system, their role, and the operating contracts

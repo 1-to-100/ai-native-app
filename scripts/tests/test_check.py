@@ -193,13 +193,62 @@ def backlog_row(heading: str, status: str, request: str = BACKLOG_REQUEST, depen
 
 
 def backlog_file(*rows: str) -> str:
-    return system_header("Application Backlog", "system/application-backlog", 2) + "\n".join(rows)
+    return system_header("Application Backlog", "system/application-backlog", 3) + "\n".join(rows)
+
+
+def stage(number: int, name: str, owner: str, skills: str = "`setup-client`") -> str:
+    return (
+        f"### Stage {number}: {name}\n#### Entry Criteria\nThe client folder exists.\n"
+        f"#### Owner\n{owner}\n#### Description\nDo the work.\n#### Graduation Criteria\ncheck.py passes.\n"
+        f"#### Branching and Terminal Paths\nDone: the run completes.\n#### Implementing Skills\n{skills}\n"
+    )
+
+
+def process(name: str, stages: str, supervisor: str = "operator") -> str:
+    return (
+        f"# {name}\n## Purpose\nQualify work.\n## Scope\nFrom lead to order.\n## Supervisor Role\n{supervisor}\n"
+        "## Cadence\nOn demand.\n## System of Record\n### Mode\nRepository Markdown\n### Location\n"
+        "`clients/<slug>/open-items.md`\n## Inputs\n- client.md\n## Stages\n"
+        f"{stages}## Outputs\n- order-form.md\n## Rules\n- None invented.\n## Related\n- `clients/open-items`\n"
+    )
+
+
+LIFECYCLE = (
+    "# Lifecycle Stage: sales (version 1)\n\n"
+    + process(
+        "Lead Qualification",
+        stage(1, "Qualify", "- operator") + stage(2, "Confirm", "Automation: On-Demand"),
+    )
+    + "\n"
+    + process("Order Preparation", stage(1, "Draft", "- operator\n- reviewer"))
+)
+
+OPEN_ITEMS = """# In Flight
+| # | Opened | Process | Stage | Responsible | Updated | Status Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2 | 2026-10-22 | Lead Qualification | Stage 1: Qualify | operator | 2026-10-22 | Started. |
+| 3 | 2026-10-22 | Lead Qualification | Stage 2: Confirm | Automation | 2026-10-22 | Queued. |
+| 4 | 2026-10-22 | Order Preparation | Stage 1: Draft | operator@example.com | 2026-10-22 | Drafting. |
+
+# Completed
+| # | Opened | Completed | Process | Outcome | Status Notes |
+| --- | --- | --- | --- | --- | --- |
+| 5 | 2026-10-01 | 2026-10-20 | Order Preparation | Done | Signed. |
+
+# Open
+None
+
+# Closed
+| # | Opened | Closed | Area | Issue | Resolution |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 2026-10-22 | 2026-10-22 | Client | Website was missing. | Written to client.md and decision 1. |
+"""
 
 
 def populate(repo: Path) -> None:
     write(
         repo / "system" / "user-roles.md",
-        system_header("User Roles", "system/user-roles")
+        system_header("User Roles", "system/user-roles", 2)
         + """# operator
 ## Display Name
 Operator
@@ -213,7 +262,30 @@ None
 - setup-application
 ## Status
 Active
+
+# reviewer
+## Display Name
+Reviewer
+## Purpose
+Backs up the operator.
+## Core Tasks
+Review drafts.
+## Processes
+None
+## Skills
+None
+## Status
+Active
 """,
+    )
+    write(repo / "process" / "sales.md", LIFECYCLE)
+    process_readme = repo / "process" / "README.md"
+    process_readme.write_text(
+        process_readme.read_text(encoding="utf-8").replace(
+            "| None | — | — | — | — |",
+            "| [`sales.md`](sales.md) | Lead Qualification | operator | On demand | Repository Markdown |",
+        ),
+        encoding="utf-8",
     )
     write(
         repo / "system" / "users.md",
@@ -259,27 +331,19 @@ The user approves the connection in the agent environment.
     )
     write(
         repo / "clients" / "acme" / "client.md",
-        client_header("Acme", "clients/client", 3) + CLIENT_BODY,
+        client_header("Acme", "clients/client", 4) + CLIENT_BODY,
     )
     write(
-        repo / "clients" / "acme" / "open-issues.md",
-        client_header("Acme — Open Issues", "clients/open-issues", 3)
-        + """# Open
-None
-
-# Closed
-| # | Opened | Closed | Area | Issue | Resolution |
-| --- | --- | --- | --- | --- | --- |
-| 1 | 2026-10-22 | 2026-10-22 | Client | Website was missing. | Written to client.md and decision 1. |
-""",
+        repo / "clients" / "acme" / "open-items.md",
+        client_header("Acme — Open Items", "clients/open-items", 4) + OPEN_ITEMS,
     )
     write(
         repo / "clients" / "acme" / "decision-log.md",
-        client_header("Acme — Decision Log", "clients/decision-log", 1)
+        client_header("Acme — Decision Log", "clients/decision-log", 2)
         + """# Decisions
 | # | Date | Area | Decision | Source |
 | --- | --- | --- | --- | --- |
-| 1 | 2026-10-22 | Client | Website remains unknown. | open-issues #1 |
+| 1 | 2026-10-22 | Client | Website remains unknown. | open-items #1 |
 """,
     )
     readme = repo / "clients" / "README.md"
@@ -344,7 +408,7 @@ class CheckTests(unittest.TestCase):
         populate(self.repo)
         write(
             self.repo / "clients" / "acme" / "decision-log.md",
-            client_header("Acme — Decision Log", "clients/decision-log", 1) + "# Decisions\nNone\n",
+            client_header("Acme — Decision Log", "clients/decision-log", 2) + "# Decisions\nNone\n",
         )
         result = run_check(self.repo)
         self.assertIn("closed issue 1", result.stdout)
@@ -395,7 +459,7 @@ class CheckTests(unittest.TestCase):
 
     def test_renamed_skill_reference_fails(self) -> None:
         path = self.repo / "process" / "sample-workflow.md"
-        path.write_text("# Process: sample-workflow (version 1)\n\n`create-application`\n", encoding="utf-8")
+        path.write_text("# Lifecycle Stage: sample-workflow (version 1)\n\n`create-application`\n", encoding="utf-8")
         result = run_check(self.repo)
         self.assertIn("create-application", result.stdout)
 
@@ -445,7 +509,7 @@ class CheckTests(unittest.TestCase):
         readme = self.repo / "system" / "README.md"
         readme.write_text(readme.read_text(encoding="utf-8").replace("| [`users.md`]", "| [`products-and-services.md`](products-and-services.md) | `system/products-and-services` | Catalog. |\n| [`users.md`]"), encoding="utf-8")
         order = self.repo / "clients" / "acme" / "order-form.md"
-        write(order, client_header("Acme — Order Form", "clients/order-form", 1) + ORDER_BODY)
+        write(order, client_header("Acme — Order Form", "clients/order-form", 2) + ORDER_BODY)
         result = run_check(self.repo)
         self.assertEqual(result.returncode, 0, result.stdout)
         order.write_text(order.read_text(encoding="utf-8").replace("Weekly check-ins included.", "Changed words."), encoding="utf-8")
@@ -457,23 +521,115 @@ class CheckTests(unittest.TestCase):
         populate(self.repo)
         write(
             self.repo / "clients" / "acme" / "order-form.md",
-            client_header("Acme — Order Form", "clients/order-form", 1) + ORDER_BODY.replace("## Status\nDraft", "## Status\nSigned"),
+            client_header("Acme — Order Form", "clients/order-form", 2) + ORDER_BODY.replace("## Status\nDraft", "## Status\nSigned"),
         )
         self.assertIn("required once status is Signed", run_check(self.repo).stdout)
 
     def test_order_form_area_is_known(self) -> None:
         populate(self.repo)
-        path = self.repo / "clients" / "acme" / "open-issues.md"
+        path = self.repo / "clients" / "acme" / "open-items.md"
         path.write_text(path.read_text(encoding="utf-8").replace("| Client |", "| Order Form |"), encoding="utf-8")
         result = run_check(self.repo)
         self.assertNotIn("is not a known area", result.stdout)
 
     def test_entitlements_area_is_rejected(self) -> None:
         populate(self.repo)
-        path = self.repo / "clients" / "acme" / "open-issues.md"
+        path = self.repo / "clients" / "acme" / "open-items.md"
         path.write_text(path.read_text(encoding="utf-8").replace("| Client |", "| Entitlements |"), encoding="utf-8")
         result = run_check(self.repo)
         self.assertIn("is not a known area", result.stdout)
+
+    def _edit(self, relative: str, old: str, new: str) -> str:
+        path = self.repo / relative
+        text = path.read_text(encoding="utf-8")
+        self.assertIn(old, text)
+        path.write_text(text.replace(old, new, 1), encoding="utf-8")
+        return run_check(self.repo).stdout
+
+    def test_old_process_title_fails(self) -> None:
+        populate(self.repo)
+        out = self._edit("process/sales.md", "# Lifecycle Stage: sales (version 1)", "# Process: sales (version 1)")
+        self.assertIn("first line must be '# Lifecycle Stage: sales (version N)'", out)
+
+    def test_duplicate_process_name_fails(self) -> None:
+        populate(self.repo)
+        write(self.repo / "process" / "delivery.md", "# Lifecycle Stage: delivery (version 1)\n\n" + process("Lead Qualification", stage(1, "Deliver", "- operator")))
+        readme = self.repo / "process" / "README.md"
+        readme.write_text(readme.read_text(encoding="utf-8") + "| [`delivery.md`](delivery.md) | Lead Qualification | operator | Weekly | Repository Markdown |\n", encoding="utf-8")
+        self.assertIn("duplicate process name", run_check(self.repo).stdout)
+
+    def test_unknown_owner_role_fails(self) -> None:
+        populate(self.repo)
+        out = self._edit("process/sales.md", "#### Owner\n- operator\n- reviewer", "#### Owner\n- operator\n- nobody")
+        self.assertIn("#### Owner: unknown role 'nobody'", out)
+
+    def test_unknown_supervisor_role_fails(self) -> None:
+        populate(self.repo)
+        out = self._edit("process/sales.md", "## Supervisor Role\noperator", "## Supervisor Role\nnobody")
+        self.assertIn("## Supervisor Role: unknown role 'nobody'", out)
+
+    def test_automation_stage_cannot_be_manual(self) -> None:
+        populate(self.repo)
+        out = self._edit("process/sales.md", "Automation: On-Demand\n#### Description\nDo the work.\n#### Graduation Criteria\ncheck.py passes.\n#### Branching and Terminal Paths\nDone: the run completes.\n#### Implementing Skills\n`setup-client`", "Automation: On-Demand\n#### Description\nDo the work.\n#### Graduation Criteria\ncheck.py passes.\n#### Branching and Terminal Paths\nDone: the run completes.\n#### Implementing Skills\nManual (Gap)")
+        self.assertIn("an Automation stage must name a skill, not Manual (Gap)", out)
+
+    def test_bad_automation_line_fails(self) -> None:
+        populate(self.repo)
+        out = self._edit("process/sales.md", "Automation: On-Demand", "Automation: Whenever")
+        self.assertIn("#### Owner: must be a bullet list of role slugs", out)
+
+    def test_recurring_automation_passes(self) -> None:
+        populate(self.repo)
+        out = self._edit("process/sales.md", "Automation: On-Demand", "Automation: Recurring (every Monday 09:00 America/New_York)")
+        self.assertIn("0 error(s)", out)
+
+    def test_role_process_reference_uses_process_name(self) -> None:
+        populate(self.repo)
+        out = self._edit("system/user-roles.md", "## Processes\nNone\n## Skills\n- setup-application", "## Processes\n- Lead Qualification\n## Skills\n- setup-application")
+        self.assertIn("0 error(s)", out)
+        out = self._edit("system/user-roles.md", "- Lead Qualification", "- sales")
+        self.assertIn("unknown reference 'sales'", out)
+
+    def test_in_flight_unknown_stage_fails(self) -> None:
+        populate(self.repo)
+        out = self._edit("clients/acme/open-items.md", "Stage 1: Qualify", "Stage 9: Qualify")
+        self.assertIn("unknown stage 'Stage 9: Qualify'", out)
+
+    def test_in_flight_unknown_process_fails(self) -> None:
+        populate(self.repo)
+        out = self._edit("clients/acme/open-items.md", "| Lead Qualification | Stage 1", "| Lead Scoring | Stage 1")
+        self.assertIn("unknown process 'Lead Scoring'", out)
+
+    def test_in_flight_responsible_must_be_owning_role(self) -> None:
+        populate(self.repo)
+        out = self._edit("clients/acme/open-items.md", "| Stage 1: Qualify | operator |", "| Stage 1: Qualify | reviewer |")
+        self.assertIn("Responsible 'reviewer' is not the owning role", out)
+
+    def test_in_flight_responsible_email_must_be_user(self) -> None:
+        populate(self.repo)
+        out = self._edit("clients/acme/open-items.md", "| operator@example.com |", "| ghost@example.com |")
+        self.assertIn("Responsible 'ghost@example.com' is not in system/users.md", out)
+
+    def test_in_flight_automation_only_on_automation_stage(self) -> None:
+        populate(self.repo)
+        out = self._edit("clients/acme/open-items.md", "| Stage 1: Qualify | operator |", "| Stage 1: Qualify | Automation |")
+        self.assertIn("is Automation but 'Stage 1: Qualify' is role-owned", out)
+
+    def test_open_items_id_space_is_shared(self) -> None:
+        populate(self.repo)
+        out = self._edit("clients/acme/open-items.md", "| 5 | 2026-10-01 |", "| 1 | 2026-10-01 |")
+        self.assertIn("# '1' is duplicate across the file", out)
+
+    def test_decision_citing_in_flight_item_fails(self) -> None:
+        populate(self.repo)
+        out = self._edit("clients/acme/decision-log.md", "open-items #1", "open-items #2")
+        self.assertIn("cites issue 2, which is not closed", out)
+
+    def test_stale_open_issues_reference_fails(self) -> None:
+        populate(self.repo)
+        out = self._edit("clients/acme/decision-log.md", "open-items #1", "open-issues #1")
+        self.assertIn("stale open-issues reference", out)
+        self.assertNotIn("review-open-issues", "".join(line for line in out.splitlines() if "stale" in line))
 
 
 if __name__ == "__main__":

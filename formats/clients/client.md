@@ -1,4 +1,4 @@
-# Format: clients/client (version 3)
+# Format: clients/client (version 4)
 
 ## Purpose
 
@@ -10,7 +10,7 @@ The authoritative record for one client or primary business entity: who they are
 
 ## Header
 
-The client header defined in `formats/README.md` with `format: clients/client`, `format_version: 3`, and `client` equal to the folder slug.
+The client header defined in `formats/README.md` with `format: clients/client`, `format_version: 4`, and `client` equal to the folder slug.
 
 ## Body
 
@@ -35,7 +35,7 @@ The date the engagement began, written `YYYY-MM-DD`, or `None` if not yet starte
 The primary point of contact as exactly two bullets in this order: `- Name: ...` and `- Email: ...`.
 
 # Business Overview
-Who the client is, what they do, who they serve, and the goals of this engagement, grounded in their own words. Write `None` when not yet captured (with a matching row in `open-issues.md`).
+Who the client is, what they do, who they serve, and the goals of this engagement, grounded in their own words. Write `None` when not yet captured (with a matching `# Open` row in `open-items.md`).
 
 # Business Problem
 The core problem this client is solving or hired us to address, in their own terms. Write `None` when not yet captured.
@@ -52,7 +52,7 @@ Approval rules, exclusions, and anything negotiated for this client that does no
 - `client.md` is the single authority for client identity inside `clients/<slug>/`. What the client is owed, and when, lives in `order-form.md`.
 - Contact details appear only here and in `order-form.md`, never in other documents.
 - Payment card or bank numbers must never appear in `client.md`.
-- Any section left `None` during onboarding must have a matching open row in `clients/<slug>/open-issues.md`.
+- Any section left `None` during onboarding must have a matching `# Open` row in `clients/<slug>/open-items.md`.
 - `setup-application` and `improve-process` may extend this format with domain-specific sections by bumping `format_version` and updating `scripts/check.py`.
 
 ## Vocabularies
@@ -61,7 +61,7 @@ None in the base format. Domain-specific vocabularies are added when `setup-appl
 
 ## Checks
 
-- Client header with `format: clients/client`, `format_version: 3`, and `client` matching the parent folder name.
+- Client header with `format: clients/client`, `format_version: 4`, and `client` matching the parent folder name.
 - All five `#` sections (`# General Information`, `# Business Overview`, `# Business Problem`, `# Solution`, `# Notes`) and their `##` subsections are present in exact order.
 - `## Contact` holds two bullets (`- Name: ...` and `- Email: ...`) with a valid email address, or `None` when tracked as an open issue.
 - `## Engagement Started` is `YYYY-MM-DD` or `None`.

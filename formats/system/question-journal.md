@@ -1,4 +1,4 @@
-# Format: system/question-journal (version 1)
+# Format: system/question-journal (version 2)
 
 ## Purpose
 
@@ -10,7 +10,7 @@ The repository-wide journal of questions an agent asked the operator beyond the 
 
 ## Header
 
-The system header defined in `formats/README.md` with `format: system/question-journal` and `format_version: 1`. No `client` key.
+The system header defined in `formats/README.md` with `format: system/question-journal` and `format_version: 2`. No `client` key.
 
 ## Body
 
@@ -32,10 +32,10 @@ One row per absorbed question, or the single line `None`. `Change` names the pro
 
 - `#` is a positive integer, unique across `# Open` and `# Closed`, and never reused.
 - A row moves from `# Open` to `# Closed`. It is never deleted, and its question text is not rewritten to hide what was asked.
-- `Skill` is a skill slug or `—` when no skill was running. `Process` is a process slug or `—`.
+- `Skill` is a skill slug or `—` when no skill was running. `Process` is the exact `# <Process Name>` heading of a process in a lifecycle stage file under `process/`, or `—`.
 - `review-question-journal` proposes the absorbing change. `improve-process` applies an approved change. The journal entry closes only after that change exists.
 - A question asked again after it was closed is a new row that cites the earlier `#` in the Question text. The recurrence is a defect in the earlier change.
-- This journal is repository-wide. Client facts that are merely missing belong in `clients/<slug>/open-issues.md`, not here.
+- This journal is repository-wide. Client facts that are merely missing belong in `clients/<slug>/open-items.md`, not here.
 
 ## Vocabularies
 
@@ -43,8 +43,8 @@ None. `Skill` and `Process` are references, not a closed display vocabulary. `LL
 
 ## Checks
 
-- System header with `format: system/question-journal` and `format_version: 1`.
+- System header with `format: system/question-journal` and `format_version: 2`.
 - `# Open` and `# Closed` are present in that order. Each is `None` or a Markdown table with the columns defined above.
 - Every `#` is a unique positive integer across both tables. `Asked` and `Closed` are `YYYY-MM-DD`.
-- `Skill` is `—` or resolves to `.agents/skills/<slug>/SKILL.md`. `Process` is `—` or resolves to `process/<slug>.md`.
+- `Skill` is `—` or resolves to `.agents/skills/<slug>/SKILL.md`. `Process` is `—` or matches a `# <Process Name>` heading in a lifecycle stage file under `process/`.
 - `# Closed` rows have a non-empty `Change` value other than `—`.

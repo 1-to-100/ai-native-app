@@ -36,7 +36,7 @@ This skill covers `system/users.md` and `system/user-roles.md`. Shared installat
 
 1. **Identify the person and the action.** If the registry is `None`, only an add is possible. Confirm the email, the action, and the operator email.
 2. **Interview.** Ask for the name, the primary role heading, and the client slugs the user is assigned (none is allowed). Read the existing record back and ask only for what is missing or changing. Do not invent a name, role, or client.
-3. **Add a missing role first.** If the named role is not in `system/user-roles.md`, interview for its display name, purpose, core tasks, process slugs, and skill slugs. Write that role as `Active` before writing the user. Confirm each process and skill slug exists.
+3. **Add a missing role first.** If the named role is not in `system/user-roles.md`, first ask whether an existing `Active` role already covers the work; fewer, well-defined roles are better, and a role is a group of people who do the same work, not a job title. Only when none fits, interview for its display name, purpose, core tasks, process names, and skill slugs. Write that role as `Active` before writing the user. Confirm each process name matches a `# <Process Name>` heading in `process/` and each skill slug exists.
 4. **Write the user.** For an add, create a `# <email>` record with `## Name`, `## Primary Role`, `## Assigned Clients` (`None` or one slug bullet per client), `## Status` of `Active`, and `## Notes` of `None` unless the operator supplied notes. For an edit, change only the fields the operator changed. Update the file header's `updated` and `updated_by`. Replace a `None` body with the first record rather than leaving `None` above the records.
 5. **Assign clients.** Set `## Assigned Clients` to exactly the slugs the operator confirmed, one bullet each, or `None`. Every slug must be an existing folder under `clients/`. Add or remove slugs only as the operator confirmed.
 6. **Retire.** Set the user's `## Status` to `Retired`. Set `## Assigned Clients` to `None`. Do not delete the user.
@@ -56,6 +56,7 @@ The operator confirms the add, edit, or retirement, the user record matches that
 - Never delete a user or role.
 - Never store a credential in the user notes.
 - Never treat a role as a permission grant.
+- Never create a role for a title when an existing role already does that work.
 - Never invent a person, role, or client slug.
 - Never copy client business facts into `system/users.md`.
 - Never leave assigned clients on a `Retired` user.

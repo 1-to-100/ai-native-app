@@ -38,7 +38,7 @@ Use this skill when the operator wants to change how the application works, add 
 1. **Refine the requirement.** Interview the operator until the change is specific enough to plan. Ask what outcome must be true when the work is done, which records change, and which cases are out of scope. Read the repository before asking for a fact it already holds. Write the requirement and acceptance criteria into `tmp/improve-process-requirement.md`. When a calling skill already supplied a requirement, check it against the same bar and ask only about gaps. Stop and keep interviewing while a missing answer would change the plan.
 2. **Write the implementation plan.** Walk the mechanisms in authority order and name every file the change touches:
    1. Global Context (`AGENTS.md`), including a version bump when scope or a universal rule changes.
-   2. Processes (`process/*.md`), including a process version bump and `process/README.md` when a stage, gate, or skill reference changes.
+   2. Processes (lifecycle stage files `process/*.md`), including the file's version bump and `process/README.md` when a process, stage, owner, gate, or skill reference changes.
    3. Formats (`formats/system/` or `formats/clients/`). If a new section, column, or vocabulary value is required, the format changes first and its title version increments.
    4. Active data. Every active document of a changed format is migrated in the same change. Unknown values stay `None`, with a client issue when the document is a client file. Do not edit `archive/` or frozen history.
    5. Subtree `AGENTS.md` files.
@@ -66,5 +66,5 @@ The operator rejects the plan, in which case no governed file from this run has 
 - Never let the implementing context grade its own result. The final review runs in a fresh context.
 - Never change a skill to write a section or vocabulary value its format does not allow. Update the format first.
 - Never bump a format version without updating `scripts/check.py` and migrating active documents of that format in the same run.
-- Never invent a value while migrating a client document. Write `None` and open a row in `clients/<slug>/open-issues.md`.
+- Never invent a value while migrating a client document. Write `None` and open a row in the `# Open` table of `clients/<slug>/open-items.md`.
 - Never edit `archive/` or rewrite a closed history row.

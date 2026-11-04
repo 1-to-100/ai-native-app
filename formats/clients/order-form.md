@@ -1,4 +1,4 @@
-# Format: clients/order-form (version 1)
+# Format: clients/order-form (version 2)
 
 ## Purpose
 
@@ -10,7 +10,7 @@ The record of what one client has ordered: the products and services owed, their
 
 ## Header
 
-The client header defined in `formats/README.md` with `format: clients/order-form`, `format_version: 1`, and `client` equal to the folder slug.
+The client header defined in `formats/README.md` with `format: clients/order-form`, `format_version: 2`, and `client` equal to the folder slug.
 
 ## Body
 
@@ -84,7 +84,7 @@ Anything negotiated or agreed that does not belong in another section. `None` wh
 - This file is the only place in the client folder that states what is owed and how often. Other documents do not restate it.
 - Contact details appear only here and in `client.md`, never in other documents.
 - Payment card or bank numbers must never appear here or in `order-form.pdf`.
-- Do not invent a price, term, or quantity. Write `None` and open an issue in `open-issues.md` with Area `Order Form`.
+- Do not invent a price, term, or quantity. Write `None` and open an issue in the `# Open` table of `open-items.md` with Area `Order Form`.
 - A `Signed` order is not edited to change what was agreed. An amendment is recorded as a decision in `decision-log.md` and then applied to this file, with the prior text kept in Git history.
 
 ## Vocabularies
@@ -110,7 +110,7 @@ Frequencies are defined in `formats/system/products-and-services.md`.
 
 ## Checks
 
-- Client header with `format: clients/order-form`, `format_version: 1`, and `client` matching the parent folder name.
+- Client header with `format: clients/order-form`, `format_version: 2`, and `client` matching the parent folder name.
 - All six `#` sections (`# Order Details`, `# Parties`, `# Line Items`, `# Commercial Terms`, `# Execution`, `# Notes`) and their `##` subsections are present in exact order.
 - `## Status` and `## Renewal` are Display Names from their vocabularies. `## Order Date`, `## Effective Date`, `## Term End`, and `## Signed Date` are `YYYY-MM-DD` (the last three may be `None`).
 - Contact sections hold two bullets with a valid email, or `None`. `## Sales Representative` is `None` or resolves to a user in `system/users.md`.

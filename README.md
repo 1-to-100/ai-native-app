@@ -9,7 +9,7 @@ Read [`docs/build-any-ai-application.md`](docs/build-any-ai-application.md) for 
 ```text
 AGENTS.md            the Global Context and repository contract (read first)
 docs/                general repository documentation, including build-any-ai-application.md; README.md is the inventory
-process/             domain workflows added for this business; shipped skills carry their own stage rules; README.md is the inventory
+process/             lifecycle stage files holding the business processes, each stage owned by a role or an Automation; shipped skills carry their own stage rules; README.md is the inventory
 formats/             format contracts split into system/ and clients/; README.md holds shared conventions and the inventory
 system/              application-wide shared records (users and their assigned clients, roles, external systems, backlog, question journal)
 clients/<slug>/      one isolated folder per client or entity
@@ -29,6 +29,8 @@ tmp/                 git-ignored working folder for interstitial agent files, pr
 - Teach a user the system and their role: `/train-me`
 - Save a later application change: `/add-to-backlog`
 - Triage the backlog and work each accepted item through to a commit: `/process-backlog`
+- See everything in flight and open for one client: `/client-status <client-slug>`
+- Find and take on the next process steps that match your role: `/whats-next`
 - Resolve a client's open issues into the decision log: `/review-open-issues <client-slug>`
 - Turn journaled operator questions into process or prompting changes: `/review-question-journal`
 - Propose, implement, and independently review a mechanism change: `/improve-process "<what needs to change>"`
@@ -42,7 +44,7 @@ tmp/                 git-ignored working folder for interstitial agent files, pr
 | --- | --- |
 | How the overall AI-native application framework works | `docs/build-any-ai-application.md` |
 | The global scope, target AI environment, and universal repository rules | `AGENTS.md` |
-| How the business runs its workflows stage by stage | `process/` |
+| How the business runs its workflows stage by stage, and which role or Automation owns each stage | `process/` |
 | What goes in the header and body of every governed document | `formats/README.md` and the namespaced contract under `formats/system/` or `formats/clients/` |
 | Which people, assigned clients, roles, external systems, and backlog items are shared | `system/` |
 | What procedures an agent can execute | `.agents/skills/README.md` |

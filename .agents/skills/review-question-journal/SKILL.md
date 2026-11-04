@@ -59,4 +59,4 @@ Every presented row was absorbed and moved to `# Closed`, or the operator left i
 - Never close a row because the operator answered the question in the session.
 - Never close a row before the absorbing change exists in the repository.
 - Never delete or rewrite a journal row.
-- Never record a client-only missing fact here. That belongs in `clients/<slug>/open-issues.md`.
+- Never record a client-only missing fact here. That belongs in the `# Open` table of `clients/<slug>/open-items.md`.

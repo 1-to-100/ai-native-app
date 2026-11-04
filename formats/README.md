@@ -12,7 +12,7 @@ The format identifier is the contract path relative to `formats/` without `.md`.
 | Format | Governs | Header Style | One per |
 | --- | --- | --- | --- |
 | [`system/global-context.md`](system/global-context.md) | Root `AGENTS.md` | `# AGENTS.md — global context (version N)` | repository |
-| [`system/process.md`](system/process.md) | `process/<slug>.md` | `# Process: <slug> (version N)` | business process |
+| [`system/process.md`](system/process.md) | `process/<lifecycle-slug>.md` | `# Lifecycle Stage: <slug> (version N)` | lifecycle stage (one or more processes per file) |
 | [`system/users.md`](system/users.md) | `system/users.md` | System header | repository |
 | [`system/user-roles.md`](system/user-roles.md) | `system/user-roles.md` | System header | repository |
 | [`system/products-and-services.md`](system/products-and-services.md) | `system/products-and-services.md` (optional) | System header | repository |
@@ -20,7 +20,7 @@ The format identifier is the contract path relative to `formats/` without `.md`.
 | [`system/application-backlog.md`](system/application-backlog.md) | `system/application-backlog.md` | System header | repository |
 | [`system/question-journal.md`](system/question-journal.md) | `system/question-journal.md` | System header | repository |
 | [`clients/client.md`](clients/client.md) | `clients/<slug>/client.md` | Client header | client |
-| [`clients/open-issues.md`](clients/open-issues.md) | `clients/<slug>/open-issues.md` | Client header | client |
+| [`clients/open-items.md`](clients/open-items.md) | `clients/<slug>/open-items.md` | Client header | client |
 | [`clients/decision-log.md`](clients/decision-log.md) | `clients/<slug>/decision-log.md` | Client header | client |
 | [`clients/order-form.md`](clients/order-form.md) | `clients/<slug>/order-form.md` (optional) | Client header | client |
 
@@ -68,7 +68,7 @@ Every governed document under `clients/<slug>/`, opens with the system header ke
 ---
 title: Acme Corp
 format: clients/client
-format_version: 3
+format_version: 4
 client: acme-corp
 created: 2026-10-22
 created_by: founder@company.com
@@ -90,7 +90,7 @@ A format may add `status` only when its Header section says so. Actor values (`c
 
 ## References
 
-- **A format** is referenced by its namespaced identifier (`system/users`, `clients/open-issues`).
+- **A format** is referenced by its namespaced identifier (`system/users`, `clients/open-items`).
 - **A file** is referenced by its slug (the filename without `.md`) when the format says to use a slug. Paths are written out when the format asks for a repository path.
 - **A record inside a multi-record file** is referenced by its heading text exactly. User records are referenced by email. Role records are referenced by slug. Backlog items are referenced by `APP-NNNN`.
 - **A vocabulary value** is written as the Display Name exactly as the governing format's table lists it.
@@ -99,12 +99,12 @@ A format may add `status` only when its Header section says so. Actor values (`c
 ## What `scripts/check.py` enforces everywhere
 
 - Root `AGENTS.md` conforms to `formats/system/global-context.md`.
-- Every process document in `process/` conforms to `formats/system/process.md`, including stage structure and skill references.
+- Every lifecycle stage file in `process/` conforms to `formats/system/process.md`, including unique process names, stage structure, stage owners, and skill references.
 - Every format contract under `formats/system/` and `formats/clients/` is discovered, and its title identifier matches its relative path.
 - Every governed data document has a complete, typed YAML header whose `format` names a contract here and whose `format_version` matches that contract's current version.
 - System documents omit `client`. Client documents include `client`.
 - Body headings match the governing format in order and heading level.
 - Vocabulary values match Display Names from the governing format's tables.
-- References among users, roles, assigned clients, clients, processes, skills, external-system owners, backlog dependencies, issues, and decisions resolve.
+- References among users, roles, assigned clients, clients, processes, stages, stage owners, skills, external-system owners, backlog dependencies, in-flight items, issues, and decisions resolve.
 - Directory inventories (`docs/README.md`, `process/README.md`, `formats/README.md`, `system/README.md`, `.agents/skills/README.md`, `scripts/README.md`) match the files on disk in both directions.
 - In a staged git diff (`--staged`), `updated` and `updated_by` changed on every modified governed data document.

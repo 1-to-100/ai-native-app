@@ -168,8 +168,36 @@ SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 FRONT_MATTER_RE = re.compile(r"\A---\n(.*?)\n---\n(.*)\Z", re.S)
 STALE_SKILL_RE = re.compile(r"(?<![\w-])create-application(?![\w-])")
 STALE_FORMAT_RE = re.compile(
-    r"(?<![\w/])formats/(global-context|process|client|open-issues|decision-log|question-journal)\.md"
+    r"(?<![\w/])formats/(global-context|process|client|open-issues|open-items|decision-log|question-journal)\.md"
 )
+STALE_ISSUES_RE = re.compile(r"(?<![\w-])open-issues(?:\.md|(?= #\d))")
+LIFECYCLE_TITLE_RE = re.compile(r"^# Lifecycle Stage: ([a-z0-9-]+) \(version (\d+)\)$")
+STAGE_HEADING_RE = re.compile(r"^Stage (\d+): \S.*$")
+AUTOMATION_RE = re.compile(r"^Automation: (?:On-Demand|Recurring \((?P<schedule>.+)\))$")
+PROCESS_SECTIONS = [
+    "Purpose",
+    "Scope",
+    "Supervisor Role",
+    "Cadence",
+    "System of Record",
+    "Inputs",
+    "Stages",
+    "Outputs",
+    "Rules",
+    "Related",
+]
+STAGE_SECTIONS = [
+    "Entry Criteria",
+    "Owner",
+    "Description",
+    "Graduation Criteria",
+    "Branching and Terminal Paths",
+    "Implementing Skills",
+]
+IN_FLIGHT_COLUMNS = ["#", "Opened", "Process", "Stage", "Responsible", "Updated", "Status Notes"]
+COMPLETED_COLUMNS = ["#", "Opened", "Completed", "Process", "Outcome", "Status Notes"]
+OPEN_COLUMNS = ["#", "Opened", "Area", "Issue", "Next Step"]
+CLOSED_COLUMNS = ["#", "Opened", "Closed", "Area", "Issue", "Resolution"]
 SECRET_RE = re.compile(
     r"(?i)\b(password|api[_-]?key|secret|access[_-]?token|token)\b\s*[:=]\s*\S+"
 )
@@ -366,70 +394,130 @@ def check_global_context(versions: dict[str, int], findings: list[str]) -> int:
     return 1
 
 
+def parse_owner(value: str) -> tuple[str, list[str]]:
+    """Classify a stage's #### Owner as ('Automation', []), ('Roles', [slugs]), or ('Invalid', [])."""
+    text = value.strip()
+    if AUTOMATION_RE.match(text):
+        return "Automation", []
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if lines and all(line.startswith("- ") for line in lines):
+        return "Roles", [line[2:].strip() for line in lines]
+    return "Invalid", []
+
+
+def lifecycle_files() -> list[Path]:
+    if not PROCESS_DIR.is_dir():
+        return []
+    return sorted(path for path in PROCESS_DIR.glob("*.md") if path.name not in {"README.md", "AGENTS.md"})
+
+
+def process_map() -> dict[str, dict[str, tuple[str, list[str]]]]:
+    """Every process name under process/ mapped to its stage headings and parsed owners. Reports nothing."""
+    processes: dict[str, dict[str, tuple[str, list[str]]]] = {}
+    for path in lifecycle_files():
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for name, body in parse_sections("\n".join(lines[1:]), 1):
+            stages: dict[str, tuple[str, list[str]]] = {}
+            for stage_name, stage_body in parse_sections(dict(parse_sections(body, 2)).get("Stages", ""), 3):
+                stages[stage_name] = parse_owner(dict(parse_sections(stage_body, 4)).get("Owner", ""))
+            processes.setdefault(name, stages)
+    return processes
+
+
+def role_statuses() -> dict[str, str]:
+    body = read_system_body("user-roles.md")
+    return lint_roles(body, [], "") if body is not None else {}
+
+
 def check_processes(findings: list[str]) -> int:
     count = 0
-    expected_h1 = [
-        "Purpose",
-        "Scope",
-        "Roles",
-        "Cadence",
-        "System of Record",
-        "Inputs",
-        "Stages",
-        "Outputs",
-        "Rules",
-        "Related",
-    ]
-    expected_stage = [
-        "Entry Criteria",
-        "Description",
-        "Graduation Criteria",
-        "Branching and Terminal Paths",
-        "Implementing Skills",
-    ]
     if not PROCESS_DIR.is_dir():
         findings.append("ERROR process/: directory missing")
         return 0
-    for path in sorted(PROCESS_DIR.glob("*.md")):
-        if path.name in {"README.md", "AGENTS.md"}:
-            continue
+    roles = role_statuses()
+    seen_names: dict[str, str] = {}
+
+    def active_role(slug: str, where: str) -> None:
+        if slug not in roles:
+            findings.append(f"ERROR {where}: unknown role {slug!r}")
+        elif roles[slug] != "Active":
+            findings.append(f"ERROR {where}: role {slug!r} is not Active")
+
+    for path in lifecycle_files():
         count += 1
         lines = path.read_text(encoding="utf-8").splitlines()
-        match = re.match(r"^# Process: ([a-z0-9-]+) \(version (\d+)\)$", lines[0].strip() if lines else "")
+        match = LIFECYCLE_TITLE_RE.match(lines[0].strip() if lines else "")
         if not match or match.group(1) != path.stem:
-            findings.append(f"ERROR {rel(path)}: first line must be '# Process: {path.stem} (version N)'")
-        secs = parse_sections("\n".join(lines[1:]), 1)
-        actual = [heading for heading, _ in secs]
-        if actual != expected_h1:
-            findings.append(f"ERROR {rel(path)}: # sections must be {expected_h1}, got {actual}")
-        sec_map = dict(secs)
-        sor = parse_sections(sec_map.get("System of Record", ""), 2)
-        if [heading for heading, _ in sor] != ["Mode", "Location"]:
-            findings.append(f"ERROR {rel(path)} -> # System of Record: ## sections must be ['Mode', 'Location']")
-        sor_map = dict(sor)
-        mode = sor_map.get("Mode", "").strip()
-        if mode not in SOR_MODES:
-            findings.append(f"ERROR {rel(path)} -> ## Mode: {mode!r} is not a system-of-record mode")
-        if mode == "External System" and "https://" not in sor_map.get("Location", ""):
-            findings.append(f"ERROR {rel(path)} -> ## Location: External System must include an https:// link")
-        stages = parse_sections(sec_map.get("Stages", ""), 2)
-        if not stages:
-            findings.append(f"ERROR {rel(path)} -> # Stages: at least one stage is required")
-        for index, (name, stage_body) in enumerate(stages, start=1):
-            if not name.startswith(f"Stage {index}: "):
-                findings.append(f"ERROR {rel(path)} -> # Stages: expected 'Stage {index}: <Name>', got {name!r}")
-            h3 = parse_sections(stage_body, 3)
-            if [heading for heading, _ in h3] != expected_stage:
-                findings.append(f"ERROR {rel(path)} -> ## {name}: ### sections must be {expected_stage}")
-            for heading, value in h3:
+            findings.append(f"ERROR {rel(path)}: first line must be '# Lifecycle Stage: {path.stem} (version N)'")
+        processes = parse_sections("\n".join(lines[1:]), 1)
+        if not processes:
+            findings.append(f"ERROR {rel(path)}: at least one '# <Process Name>' section is required")
+        for name, body in processes:
+            where = f"{rel(path)} -> # {name}"
+            if name in seen_names:
+                findings.append(f"ERROR {where}: duplicate process name (also in {seen_names[name]})")
+            seen_names.setdefault(name, rel(path))
+            secs = parse_sections(body, 2)
+            actual = [heading for heading, _ in secs]
+            if actual != PROCESS_SECTIONS:
+                findings.append(f"ERROR {where}: ## sections must be {PROCESS_SECTIONS}, got {actual}")
+            sec_map = dict(secs)
+            for heading, value in secs:
                 if not value.strip():
-                    findings.append(f"ERROR {rel(path)} -> ## {name} -> ### {heading}: section is empty")
-                if heading == "Implementing Skills" and not value.strip().startswith(("Manual (Gap)", "External (")):
-                    for skill in re.findall(r"`([a-z0-9-]+)`", value):
+                    findings.append(f"ERROR {where} -> ## {heading}: section is empty")
+            supervisor = sec_map.get("Supervisor Role", "").strip()
+            if supervisor:
+                if not SLUG_RE.match(supervisor):
+                    findings.append(f"ERROR {where} -> ## Supervisor Role: must be a single role slug")
+                else:
+                    active_role(supervisor, f"{where} -> ## Supervisor Role")
+            sor = parse_sections(sec_map.get("System of Record", ""), 3)
+            if [heading for heading, _ in sor] != ["Mode", "Location"]:
+                findings.append(f"ERROR {where} -> ## System of Record: ### sections must be ['Mode', 'Location']")
+            sor_map = dict(sor)
+            mode = sor_map.get("Mode", "").strip()
+            if mode not in SOR_MODES:
+                findings.append(f"ERROR {where} -> ### Mode: {mode!r} is not a system-of-record mode")
+            if mode == "External System" and "https://" not in sor_map.get("Location", ""):
+                findings.append(f"ERROR {where} -> ### Location: External System must include an https:// link")
+            stages = parse_sections(sec_map.get("Stages", ""), 3)
+            if not stages:
+                findings.append(f"ERROR {where} -> ## Stages: at least one stage is required")
+            for index, (stage_name, stage_body) in enumerate(stages, start=1):
+                stage_where = f"{where} -> ### {stage_name}"
+                if not stage_name.startswith(f"Stage {index}: ") or not STAGE_HEADING_RE.match(stage_name):
+                    findings.append(f"ERROR {where} -> ## Stages: expected 'Stage {index}: <Name>', got {stage_name!r}")
+                h4 = parse_sections(stage_body, 4)
+                if [heading for heading, _ in h4] != STAGE_SECTIONS:
+                    findings.append(f"ERROR {stage_where}: #### sections must be {STAGE_SECTIONS}")
+                h4_map = dict(h4)
+                for heading, value in h4:
+                    if not value.strip():
+                        findings.append(f"ERROR {stage_where} -> #### {heading}: section is empty")
+                kind, owner_roles = parse_owner(h4_map.get("Owner", ""))
+                if "Owner" in h4_map and kind == "Invalid":
+                    findings.append(
+                        f"ERROR {stage_where} -> #### Owner: must be a bullet list of role slugs, "
+                        "'Automation: On-Demand', or 'Automation: Recurring (<schedule>)'"
+                    )
+                if len(set(owner_roles)) != len(owner_roles):
+                    findings.append(f"ERROR {stage_where} -> #### Owner: duplicate role slug")
+                for slug in owner_roles:
+                    if not SLUG_RE.match(slug):
+                        findings.append(f"ERROR {stage_where} -> #### Owner: {slug!r} is not a role slug")
+                    else:
+                        active_role(slug, f"{stage_where} -> #### Owner")
+                skills_value = h4_map.get("Implementing Skills", "").strip()
+                if kind == "Automation" and skills_value.startswith("Manual (Gap)"):
+                    findings.append(
+                        f"ERROR {stage_where} -> #### Implementing Skills: an Automation stage must name a skill, not Manual (Gap)"
+                    )
+                if kind == "Automation" and not re.findall(r"`([a-z0-9-]+)`", skills_value):
+                    findings.append(f"ERROR {stage_where} -> #### Implementing Skills: an Automation stage must name a skill")
+                if not skills_value.startswith(("Manual (Gap)", "External (")):
+                    for skill in re.findall(r"`([a-z0-9-]+)`", skills_value):
                         if not (SKILLS_DIR / skill / "SKILL.md").is_file():
-                            findings.append(
-                                f"ERROR {rel(path)} -> ## {name} -> ### Implementing Skills: unknown skill {skill!r}"
-                            )
+                            findings.append(f"ERROR {stage_where} -> #### Implementing Skills: unknown skill {skill!r}")
     return count
 
 
@@ -554,6 +642,8 @@ def check_stale_references(findings: list[str]) -> None:
             findings.append(f"ERROR {rel(path)}: stale skill reference 'create-application'")
         if STALE_FORMAT_RE.search(text):
             findings.append(f"ERROR {rel(path)}: stale flat format path; use formats/system/ or formats/clients/")
+        if ARCHIVE_DIR not in path.parents and STALE_ISSUES_RE.search(text):
+            findings.append(f"ERROR {rel(path)}: stale open-issues reference; use open-items")
 
 
 def header_and_body(
@@ -601,9 +691,7 @@ def header_and_body(
 
 
 def reference_sets() -> tuple[set[str], set[str]]:
-    processes = {
-        path.stem for path in PROCESS_DIR.glob("*.md") if path.name not in {"README.md", "AGENTS.md"}
-    } if PROCESS_DIR.is_dir() else set()
+    processes = set(process_map())
     skills = {
         path.name for path in SKILLS_DIR.iterdir() if path.is_dir() and (path / "SKILL.md").is_file()
     } if SKILLS_DIR.is_dir() else set()
@@ -988,20 +1076,27 @@ def validate_client_body(body: str, where: str, findings: list[str]) -> None:
             findings.append(f"ERROR {where} -> ## Contact: must be '- Name: ...' and '- Email: <valid-email>' or None")
 
 
-def validate_open_issues(body: str, findings: list[str], where: str) -> tuple[set[int], set[int]]:
+def validate_open_items(
+    body: str, findings: list[str], where: str, user_emails: set[str] | None
+) -> tuple[set[int], set[int]]:
+    """Validate the four open-items tables. Returns (all ids, closed issue ids)."""
+    expected = ["In Flight", "Completed", "Open", "Closed"]
     secs = parse_sections(body, 1)
-    if [heading for heading, _ in secs] != ["Open", "Closed"]:
-        findings.append(f"ERROR {where}: # sections must be ['Open', 'Closed']")
+    if [heading for heading, _ in secs] != expected:
+        findings.append(f"ERROR {where}: # sections must be {expected}")
         return set(), set()
+    processes = process_map()
     all_ids: set[int] = set()
     closed_ids: set[int] = set()
+    columns = {
+        "In Flight": IN_FLIGHT_COLUMNS,
+        "Completed": COMPLETED_COLUMNS,
+        "Open": OPEN_COLUMNS,
+        "Closed": CLOSED_COLUMNS,
+    }
     for name, value in secs:
-        columns = (
-            ["#", "Opened", "Area", "Issue", "Next Step"]
-            if name == "Open"
-            else ["#", "Opened", "Closed", "Area", "Issue", "Resolution"]
-        )
-        rows = parse_table(value, columns, findings, f"{where} -> # {name}")
+        table_where = f"{where} -> # {name}"
+        rows = parse_table(value, columns[name], findings, table_where)
         if not rows:
             continue
         for row in rows:
@@ -1010,20 +1105,49 @@ def validate_open_issues(body: str, findings: list[str], where: str) -> tuple[se
                 if number <= 0 or number in all_ids:
                     raise ValueError
             except ValueError:
-                findings.append(f"ERROR {where} -> # {name}: issue # {row[0]!r} is duplicate or not a positive integer")
+                findings.append(f"ERROR {table_where}: # {row[0]!r} is duplicate across the file or not a positive integer")
                 continue
             all_ids.add(number)
             if not valid_date(row[1]):
-                findings.append(f"ERROR {where} -> # {name}: Opened must be YYYY-MM-DD")
-            if name == "Open":
-                area = row[2]
-            else:
-                closed_ids.add(number)
+                findings.append(f"ERROR {table_where}: Opened must be YYYY-MM-DD")
+            if name == "In Flight":
+                _, _, process, stage, responsible, updated, _ = row
+                if not valid_date(updated):
+                    findings.append(f"ERROR {table_where}: Updated must be YYYY-MM-DD")
+                if process not in processes:
+                    findings.append(f"ERROR {table_where}: row {number} names unknown process {process!r}")
+                    continue
+                if stage not in processes[process]:
+                    findings.append(f"ERROR {table_where}: row {number} names unknown stage {stage!r} of {process!r}")
+                    continue
+                kind, owner_roles = processes[process][stage]
+                if responsible == "Automation":
+                    if kind != "Automation":
+                        findings.append(f"ERROR {table_where}: row {number} is Automation but {stage!r} is role-owned")
+                elif EMAIL_RE.match(responsible):
+                    if user_emails is not None and responsible not in user_emails:
+                        findings.append(f"ERROR {table_where}: row {number} Responsible {responsible!r} is not in system/users.md")
+                elif kind == "Automation":
+                    findings.append(f"ERROR {table_where}: row {number} Responsible must be Automation for {stage!r}")
+                elif not owner_roles or responsible != owner_roles[0]:
+                    findings.append(
+                        f"ERROR {table_where}: row {number} Responsible {responsible!r} is not the owning role of {stage!r}"
+                    )
+            elif name == "Completed":
                 if not valid_date(row[2]):
-                    findings.append(f"ERROR {where} -> # Closed: Closed must be YYYY-MM-DD")
-                area = row[3]
-            if area not in ISSUE_AREAS:
-                findings.append(f"ERROR {where} -> # {name}: Area {area!r} is not a known area")
+                    findings.append(f"ERROR {table_where}: Completed must be YYYY-MM-DD")
+                if row[3] not in processes:
+                    findings.append(f"ERROR {table_where}: row {number} names unknown process {row[3]!r}")
+            else:
+                if name == "Open":
+                    area = row[2]
+                else:
+                    closed_ids.add(number)
+                    if not valid_date(row[2]):
+                        findings.append(f"ERROR {table_where}: Closed must be YYYY-MM-DD")
+                    area = row[3]
+                if area not in ISSUE_AREAS:
+                    findings.append(f"ERROR {table_where}: Area {area!r} is not a known area")
     return all_ids, closed_ids
 
 
@@ -1062,7 +1186,7 @@ def cross_check_decisions(
     for decision_number, source in sources:
         if source == "operator":
             continue
-        match = re.fullmatch(r"open-issues #(\d+)", source)
+        match = re.fullmatch(r"open-items #(\d+)", source)
         if not match:
             findings.append(f"ERROR {where}: decision #{decision_number} source {source!r} is not valid")
             continue
@@ -1083,9 +1207,11 @@ def lint_client_folder(
     count = 0
     required = {
         "client.md": "clients/client",
-        "open-issues.md": "clients/open-issues",
+        "open-items.md": "clients/open-items",
         "decision-log.md": "clients/decision-log",
     }
+    users_body = read_system_body("users.md")
+    user_emails = set(records(users_body, [], "") or {}) if users_body is not None else None
     bodies: dict[str, str] = {}
     for filename, format_id in required.items():
         path = folder / filename
@@ -1099,12 +1225,14 @@ def lint_client_folder(
     if "client.md" in bodies:
         validate_client_body(bodies["client.md"], rel(folder / "client.md"), findings)
     all_ids, closed_ids = set(), set()
-    if "open-issues.md" in bodies:
-        all_ids, closed_ids = validate_open_issues(bodies["open-issues.md"], findings, rel(folder / "open-issues.md"))
+    if "open-items.md" in bodies:
+        all_ids, closed_ids = validate_open_items(
+            bodies["open-items.md"], findings, rel(folder / "open-items.md"), user_emails
+        )
     sources: list[tuple[str, str]] = []
     if "decision-log.md" in bodies:
         sources = validate_decision_log(bodies["decision-log.md"], findings, rel(folder / "decision-log.md"))
-    if "open-issues.md" in bodies and "decision-log.md" in bodies:
+    if "open-items.md" in bodies and "decision-log.md" in bodies:
         cross_check_decisions(closed_ids, all_ids, sources, findings, rel(folder / "decision-log.md"))
     order_path = folder / "order-form.md"
     if order_path.is_file():
@@ -1113,8 +1241,6 @@ def lint_client_folder(
         headers[rel(order_path)] = header
         catalog_body = read_system_body("products-and-services.md")
         catalog = lint_products(catalog_body, [], "") if catalog_body is not None else None
-        users_body = read_system_body("users.md")
-        user_emails = set(records(users_body, [], "") or {}) if users_body is not None else None
         validate_order_form_body(body, rel(order_path), folder, catalog, user_emails, findings)
     for stray in sorted(folder.glob("*.md")):
         if stray.name not in required and stray.name != "order-form.md":

@@ -1,4 +1,4 @@
-# Format: system/application-backlog (version 2)
+# Format: system/application-backlog (version 3)
 
 ## Purpose
 
@@ -10,7 +10,7 @@ The backlog of application changes and future enhancements that the operator wan
 
 ## Header
 
-The system header defined in `formats/README.md` with `format: system/application-backlog` and `format_version: 2`. No `client` key.
+The system header defined in `formats/README.md` with `format: system/application-backlog` and `format_version: 3`. No `client` key.
 
 ## Body
 
@@ -74,7 +74,7 @@ What was implemented and where, or why the item was cancelled. `None` until the 
 ## Rules
 
 - Headings are never reused or deleted. A finished item stays in the file with status `Done` or `Cancelled`.
-- Client-specific missing facts stay in `clients/<slug>/open-issues.md`. Only application-level changes and enhancements belong here.
+- Client-specific missing facts stay in `clients/<slug>/open-items.md`. Only application-level changes and enhancements belong here.
 - Every record carries all nine `###` subsections under `## Request`, in order. `### Statement`, `### Problem and Trigger`, `### Desired Outcome`, `### In Scope`, and `### Mechanisms and Records Affected` are never `None`. The other four may be `None`.
 - `### Open Points` is `None` or a bullet list. An answered open point moves into the subsection it belongs to and leaves the list.
 - `Proposed` means captured with a complete typed request and not yet refined or planned. `Ready` means the requirement, acceptance criteria, and plan are sufficient to invoke `improve-process` and no open point remains.
@@ -94,7 +94,7 @@ Backlog Statuses:
 
 ## Checks
 
-- System header with `format: system/application-backlog` and `format_version: 2`.
+- System header with `format: system/application-backlog` and `format_version: 3`.
 - The body is `None`, or every `#` heading matches `APP-` plus four digits, is unique, and contains `## Title`, `## Status`, `## Opened`, `## Request`, `## Refined Requirement`, `## Acceptance Criteria`, `## Plan`, `## Dependencies`, and `## Resolution` in that order.
 - `## Request` opens directly with `### Statement` and contains exactly `### Statement`, `### Problem and Trigger`, `### Desired Outcome`, `### In Scope`, `### Out of Scope`, `### Mechanisms and Records Affected`, `### Constraints`, `### Why Held`, and `### Open Points` in that order, each non-empty. The five required subsections are not `None`. `### Open Points` is `None` or a bullet list.
 - `## Title` is not `None`. `## Status` is a Backlog Status Display Name. `## Opened` is `YYYY-MM-DD`.

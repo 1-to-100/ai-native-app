@@ -14,7 +14,7 @@ A client or primary business entity is ready to be onboarded. The operator may p
 This skill creates `clients/<slug>/` and interviews the operator until every required field is answered or tracked. It does not discover prospects, negotiate commercial terms, or change application mechanisms. Mechanism changes go to `improve-process`. Later review of open issues is `review-open-issues`.
 
 - **Entry.** The operator names a client to onboard. The slug does not yet exist in `clients/` or `archive/`.
-- **Graduation.** Every required field is written into its target document or recorded as an `# Open` row. Every `# Closed` row has a matching decision-log row. `clients/README.md` includes the client. `python3 scripts/check.py <slug>` passes with zero errors, and `tmp/setup-report-<slug>.md` is written.
+- **Graduation.** Every required field is written into its target document or recorded as an `# Open` row in `open-items.md`. Every `# Closed` row has a matching decision-log row. `clients/README.md` includes the client. `python3 scripts/check.py <slug>` passes with zero errors, and `tmp/setup-report-<slug>.md` is written.
 - **Onboarded.** The client folder is lint-clean and can enter the application's operational work.
 - **Slug taken.** `clients/<slug>/` or `archive/<slug>/` exists. Stop and ask for a different slug or hand off to `review-open-issues`.
 - **Retired later.** When an active client leaves, move the folder to `archive/<slug>/` with an `ARCHIVED.md` note, and remove that slug from users' assigned clients through `update-user`.
@@ -31,7 +31,7 @@ This skill creates `clients/<slug>/` and interviews the operator until every req
 ## Reads
 
 - Only the files the operator names. Never search Slack, email, or Drive to fill a gap.
-- `formats/README.md`, `formats/clients/client.md`, `formats/clients/order-form.md`, `formats/clients/open-issues.md`, and `formats/clients/decision-log.md`.
+- `formats/README.md`, `formats/clients/client.md`, `formats/clients/order-form.md`, `formats/clients/open-items.md`, and `formats/clients/decision-log.md`.
 - `system/products-and-services.md` when it exists, and `system/users.md`, so order-form items and the sales representative resolve.
 - `clients/README.md` and `clients/AGENTS.md`.
 
@@ -43,23 +43,23 @@ The Setup Ledger lists everything that stands between what the operator provided
 - A value that conflicts between two things the operator provided.
 - A `scripts/check.py` warning, or an error that cannot be resolved from what was provided.
 
-Each entry holds: `#`, `Step`, `Area`, `Item`, `Evidence`, `Recommended Approach`, and `Issue` (the `open-issues.md` row number, once opened). The recommended approach never invents a fact.
+Each entry holds: `#`, `Step`, `Area`, `Item`, `Evidence`, `Recommended Approach`, and `Issue` (the `open-items.md` issue row number, once opened). The recommended approach never invents a fact.
 
 ## Procedure
 
 1. **Gather what exists.** Ask the operator for anything they have on the client and read the files they name. Propose a slug and confirm it. Stop if `clients/<slug>/` or `archive/<slug>/` exists. Ask whether the client has ordered products or services, and whether an order form exists.
 2. **Draft from the information.** Extract only facts the operator's information states. Map them to the fields of `client.md` and, when an order exists, `order-form.md`. Do not infer or fill a field from anything else. Open the Setup Ledger with an entry for every required field still unknown.
-3. **Create the client directory.** Create `clients/<slug>/` and write `client.md`, `open-issues.md`, `decision-log.md`, and `order-form.md` when an order exists, each with the client YAML header. Set `format` to the governing identifier, `format_version` to that contract's current version, `client` to the slug, `created` and `updated` to today, and both actor fields to the operator email. Write `None` in every unknown field. Order-form line items come from `system/products-and-services.md` when it exists: use the exact item name and copy its Specification verbatim. If the operator supplies a signed PDF, redact payment card or bank numbers, save it as `clients/<slug>/order-form.pdf`, and set `Signed Copy` to `order-form.pdf`.
+3. **Create the client directory.** Create `clients/<slug>/` and write `client.md`, `open-items.md` (with `# In Flight` and `# Completed` as `None`; no process run starts during onboarding), `decision-log.md`, and `order-form.md` when an order exists, each with the client YAML header. Set `format` to the governing identifier, `format_version` to that contract's current version, `client` to the slug, `created` and `updated` to today, and both actor fields to the operator email. Write `None` in every unknown field. Order-form line items come from `system/products-and-services.md` when it exists: use the exact item name and copy its Specification verbatim. If the operator supplies a signed PDF, redact payment card or bank numbers, save it as `clients/<slug>/order-form.pdf`, and set `Signed Copy` to `order-form.pdf`.
 4. **Lint.** Add the client to `clients/README.md`. Run `python3 scripts/check.py <slug>`. Fix mechanical formatting and add anything unresolved to the Setup Ledger.
 5. **Interview for the blanks.** Walk the Setup Ledger one entry at a time, asking the operator for the missing value with the evidence and a recommended approach. The operator answers, accepts the recommendation, or defers.
-   - **On answer:** Write it into the document named by `Area`. If the entry has an `# Open` row, move that row to `# Closed` and append one row to `decision-log.md` whose `Source` is `open-issues #<id>` and whose `Area` matches the issue. Update `updated` and `updated_by` on each file written.
+   - **On answer:** Write it into the document named by `Area`. If the entry has an `# Open` row, move that row to `# Closed` and append one row to `decision-log.md` whose `Source` is `open-items #<id>` and whose `Area` matches the issue. Update `updated` and `updated_by` on each file written.
    - **On defer:** Open or keep an `# Open` row with a concrete `Next Step`.
    - Run `python3 scripts/check.py <slug>` after every write.
 6. **Write the setup report.** Write `tmp/setup-report-<slug>.md` listing every file written and the final outcome of each ledger entry. Run `python3 scripts/check.py`.
 
 ## Writes
 
-- `clients/<slug>/client.md`, `clients/<slug>/open-issues.md`, and `clients/<slug>/decision-log.md`.
+- `clients/<slug>/client.md`, `clients/<slug>/open-items.md`, and `clients/<slug>/decision-log.md`.
 - `clients/<slug>/order-form.md`, and `order-form.pdf` when the operator supplies a signed copy.
 - `clients/README.md`.
 - `tmp/setup-report-<slug>.md`.
