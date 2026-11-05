@@ -6,7 +6,7 @@ This repository is an AI-native application built on the 1 to 100 repeatable fac
 # Scope and Out of Scope
 ## In Scope
 - Defining and running stage-by-stage business processes in `process/`, grouped into lifecycle stage files governed by `formats/system/process.md`, where every stage is owned by a role from `system/user-roles.md` or by an Automation.
-- Enforcing structured Markdown schemas in `formats/system/` and `formats/clients/`.
+- Enforcing structured Markdown schemas in `formats/system/` and `formats/clients/`, and holding the contracts for documents in external systems in `formats/external/`.
 - Storing people (with their assigned clients), roles, external-system guidance, the optional catalog of products and services the organization sells, the application backlog, and the question journal in `system/`.
 - Executing repeatable stage workflows through skills in `.agents/skills/` and verifying every change with `scripts/check.py`.
 - Evolving the application's mechanisms atomically through `improve-process`, and upgrading the repository to the current template paradigm through `upgrade-app`.
@@ -30,14 +30,14 @@ Optimized for Claude Code slash commands, fresh-context subagents for verificati
 # Before You Act
 1. Read `process/README.md`. When a process in a lifecycle stage file in `process/` governs the work, read that process section for its stages, each stage's owner, entry criteria, graduation criteria, branching paths, and where a stage stops. The skills that ship with this template carry those rules themselves.
 2. Read `.agents/skills/README.md` to see the inventory of skills before executing one. If a skill covers the stage, invoke it by name (`/setup-application`, `/setup-client`, `/improve-process`) rather than improvising the procedure by hand.
-3. Read `formats/README.md` and the governing format contract in `formats/system/` or `formats/clients/` for every document you will write or edit. The format contract is the single source of truth for that document's header, sections, and vocabularies.
+3. Read `formats/README.md` and the governing format contract in `formats/system/`, `formats/clients/`, or `formats/external/` for every document you will write or edit. The format contract is the single source of truth for that document's header, sections, and vocabularies.
 4. Read the nearest subtree `AGENTS.md` before editing files in that directory. During client-specific work, follow `system/AGENTS.md`: read users, roles, and external-system guidance, and treat a user's `## Assigned Clients` as the clients that user may serve.
 5. Read `scripts/README.md` before running a script.
 6. When bootstrapping, configuring, or restructuring the application, read `docs/build-any-ai-application.md`.
 
 # Every File
 - Every governed Markdown file under `system/` opens with the system YAML header defined in `formats/README.md`. Every governed Markdown file under `clients/` opens with the client YAML header. Neither header adds keys unless its format contract explicitly adds `status`.
-- The `format` key is the namespaced identifier of the contract under `formats/`, such as `system/users` or `clients/client`. The document follows that format exactly: the sections, their order, their heading levels, and vocabulary values written as Display Names.
+- The `format` key is the namespaced identifier of the contract under `formats/`, such as `system/users`, `clients/client`, or `external/<name>` (the three namespaces `system/`, `clients/`, and `external/`). The document follows that format exactly: the sections, their order, their heading levels, and vocabulary values written as Display Names.
 - Keep every file you touch in format as you go. Run `python3 scripts/check.py` before you commit and fix every error it reports.
 - `updated` and `updated_by` change in every commit that touches a governed file. `created_by` and `updated_by` always hold the human operator's email address—never a name, handle, or agent identifier.
 - A required section with nothing to say holds the single line `None`. An empty multi-record registry is the single line `None`. Never delete a section the format lists.

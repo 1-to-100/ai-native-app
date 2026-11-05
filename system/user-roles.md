@@ -4,7 +4,7 @@ format: system/user-roles
 format_version: 2
 created: 2026-10-22
 created_by: springer@1to100.com
-updated: 2026-11-04
+updated: 2026-11-05
 updated_by: springer@1to100.com
 ---
 
@@ -22,7 +22,8 @@ None
 - process-backlog
 - setup-application
 - upgrade-app
-- update-user
+- setup-user
+- remove-user
 - review-question-journal
 - add-to-backlog
 - whats-next

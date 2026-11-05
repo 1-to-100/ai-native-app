@@ -41,7 +41,7 @@ Operational context that is not a secret, or `None`.
 - An `Active` user references an `Active` role. A `Retired` user keeps the last role heading and is not deleted.
 - `## Assigned Clients` is routing metadata only: client slugs and nothing else about those clients. A slug appears at most once per user.
 - A user serves a client in their primary role. A user with `None` assigned clients has no client access.
-- Retiring a user is done through `update-user`, which also sets that user's `## Assigned Clients` to `None`. Archiving a client removes its slug from every user's list.
+- Retiring a user is done through `remove-user`, which also sets that user's `## Assigned Clients` to `None`, hands over owned external systems and in-flight work, and has the operator confirm the user's external accounts are removed. Archiving a client removes its slug from every user's list.
 - This file stores no password, token, recovery code, or other credential.
 - Header emails may exist before the first user row is interviewed. Once this registry has any record, new `updated_by` values on system files should be an email in this file.
 

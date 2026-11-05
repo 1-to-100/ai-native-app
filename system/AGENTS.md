@@ -8,7 +8,7 @@ This directory holds application-wide data shared across the repository. Every g
 - An agent doing client-specific work may read `system/users.md`, `system/user-roles.md`, and `system/external-systems.md`, and only the assigned-client entries that equal the client being served. It does not read or recite other client slugs from a user record.
 - `system/products-and-services.md` describes what the organization sells in general. It names no client and holds no price negotiated for one client.
 - Client-specific work never writes a client fact into `system/`.
-- Users, roles, backlog items, and journal rows are not deleted. Retire a user or role, remove an assigned client, or close a backlog or journal row.
-- Never store a credential, API key, token, password, or unredacted payment number in this directory. External-system guidance names the setup step, not the secret.
+- Users, roles, backlog items, and journal rows are not deleted. Retire a user (through `remove-user`) or role, remove an assigned client, or close a backlog or journal row.
+- Never store a credential, API key, token, password, or unredacted payment number in this directory. External-system guidance names the setup step, not the secret. An external system's `## Data Mapping` maps data objects by format field and never carries a client fact.
 - `updated` and `updated_by` change on every edit to a governed file here. `created_by` and `updated_by` are the human operator's email.
 - Run `python3 scripts/check.py` after any edit here.

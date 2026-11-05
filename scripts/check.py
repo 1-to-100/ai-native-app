@@ -101,6 +101,7 @@ EXTERNAL_FIELDS = [
     "Status",
     "Purpose",
     "Coordination Guidance",
+    "Data Mapping",
     "System Administration",
     "User Connection",
     "Owner",
@@ -641,7 +642,7 @@ def check_stale_references(findings: list[str]) -> None:
         if STALE_SKILL_RE.search(text):
             findings.append(f"ERROR {rel(path)}: stale skill reference 'create-application'")
         if STALE_FORMAT_RE.search(text):
-            findings.append(f"ERROR {rel(path)}: stale flat format path; use formats/system/ or formats/clients/")
+            findings.append(f"ERROR {rel(path)}: stale flat format path; use formats/system/, formats/clients/, or formats/external/")
         if ARCHIVE_DIR not in path.parents and STALE_ISSUES_RE.search(text):
             findings.append(f"ERROR {rel(path)}: stale open-issues reference; use open-items")
 

@@ -151,7 +151,7 @@ An AI application in this framework is built from seven interlocking mechanisms.
 | --- | --- | --- | --- | --- |
 | **1** | **Global Context** | Root `AGENTS.md` | Defines what the application is, what is out of scope, the target AI environment, and the rules that apply everywhere. | Governs the entire repository. No nested file, process, or skill may violate it. |
 | **2** | **Processes** | `process/*.md` | Lifecycle stage files that define the business workflows stage by stage: entry criteria, stage owner (a role or an Automation), stage work, graduation criteria, branching paths, system of record, supervisor role, and implementing skills. | States business intent. Governs what skills must do, subject to the data structures allowed by Formats. |
-| **3** | **Formats** | `formats/system/*.md` and `formats/clients/*.md` | Defines the exact schema—headers, sections, vocabularies, and rules—for every document type in the repository. | **The format wins over skills and processes** on what a document holds. If a process needs a new field, update the format first. |
+| **3** | **Formats** | `formats/system/*.md`, `formats/clients/*.md`, and `formats/external/*.md` | Defines the exact schema—headers, sections, vocabularies, and rules—for every document type in the repository. | **The format wins over skills and processes** on what a document holds. If a process needs a new field, update the format first. |
 | **4** | **Subtree Agents** | `<dir>/AGENTS.md` | Defines local guardrails for agents working inside a specific directory (`process/`, `formats/`, `clients/`, `system/`, `docs/`). | Adds stricter rules for its folder; never relaxes the root `AGENTS.md`. |
 | **5** | **Skills** | `<skills-dir>/<name>/SKILL.md` | Defines the step-by-step procedure an agent runs when invoked to execute a stage of a process. | Operates strictly inside `AGENTS.md`, `process/`, and `formats/`. If a skill disagrees with a format, fix the skill. |
 | **6** | **Deterministic Scripts** | `scripts/*.py` (or `.ts`) | Enforces format schemas, reference resolution, header attribution, and skill links mechanically. | The automated gatekeeper. No skill run or commit is complete until `check.py` exits with zero errors. |
@@ -200,7 +200,7 @@ Every process section follows a strict, machine-checked structure built around d
 
 ### 5.4. Format Contracts (`formats/`)
 
-A format contract is the schema for one kind of Markdown document. `formats/README.md` holds the shared rules across the entire repository (the standard header, single-record vs. multi-record heading rules, reference rules, and the table of all formats). System contracts live in `formats/system/`. Client contracts live in `formats/clients/`. Each contract governs one document type and contains:
+A format contract is the schema for one kind of Markdown document. `formats/README.md` holds the shared rules across the entire repository (the standard header, single-record vs. multi-record heading rules, reference rules, and the table of all formats). System contracts live in `formats/system/`. Client contracts live in `formats/clients/`. Contracts for documents that live in an external system (never held in this repository) live in `formats/external/`. Each contract governs one document type and contains:
 * **`# Purpose`** — Why the document exists.
 * **`# Location`** — Where files of this format live.
 * **`# Header`** — Any additions to the standard YAML front matter.
@@ -285,7 +285,7 @@ Every repository built on this framework starts with the skills in `.agents/skil
 
 **How `setup-application` works:**
 1. **Reads the Blueprint:** Reads this governing document (`docs/build-any-ai-application.md`) and inspects the current repository state.
-2. **Routes the Request:** If the operator supplied a request, names the `system/` files it changes. A mechanism change is handed to `improve-process`. User and assigned-client changes are handed to `update-user`.
+2. **Routes the Request:** If the operator supplied a request, names the `system/` files it changes. A mechanism change is handed to `improve-process`. User and assigned-client changes are handed to `setup-user`.
 3. **Scans When No Request Is Given:** Checks root `AGENTS.md` and the `README.md` and `AGENTS.md` files for `process/`, `formats/`, `.agents/skills/`, `scripts/`, `clients/`, and `system/`, plus every governed file in `system/`. Missing framework files are created in Global Context, Process, Format, Subtree Agent, Skill, then Script order. The root `AGENTS.md` conforms to `formats/system/global-context.md`. Processes conform to `formats/system/process.md`.
 4. **Interviews for External Systems:** Asks which systems agents should coordinate with, such as a tracker, CRM, email system, or calendar, and records them in `system/external-systems.md`.
 5. **Walks Shared Administration:** Walks the operator through the shared installation or administration those systems need before any individual user connects.
@@ -327,7 +327,7 @@ Every row in `system/question-journal.md` is a moment where the line stopped and
 
 These skills operate the shared records in `system/` and the client decision path:
 
-* `update-user` adds, edits, or retires a person and records each person's assigned clients in `system/users.md`.
+* `setup-user` is the front end for setting up a person: it adds or edits them, records their assigned clients in `system/users.md`, and has the operator validate that the external accounts the person needs exist in every listed system. `remove-user` is its complement: it retires the person (the record is never deleted), clears their assigned clients, hands over owned external systems and in-flight work, and has the operator confirm each external account is removed.
 * `setup-my-integrations` walks one user through connecting their own accounts. It does not repeat the shared administration `setup-application` already completed, and it does not store secrets.
 * `train-me` teaches one user the application scope, their recorded role, the format concepts, the processes, and the operating rules those contracts depend on.
 * `add-to-backlog` interviews the operator until the request is fully specified, then records it as a later application change with a typed request. `process-backlog` triages the whole backlog with the operator, then plans, implements through `improve-process`, reviews, closes, and commits each accepted item in turn.
@@ -360,6 +360,7 @@ formats/                    Format contracts (schemas) for every governed Markdo
   AGENTS.md                 Rules for changing formats and bumping format_version atomically
   system/                   Contracts for root context, processes, and system/ records
   clients/                  Contracts for client records
+  external/                 Contracts for documents that live in an external system (created with the first such contract)
 clients/                    One isolated subfolder per client or entity (clients/<slug>/)
   README.md                 How client folders are structured and operated
   AGENTS.md                 Tenant isolation and client-folder rules
@@ -381,7 +382,8 @@ archive/                    Retired client folders and retired catalog items (no
   review-open-issues/       Skill: resolve one client's open issues into the decision log
   whats-next/               Skill: find and take on the in-flight process steps that match a user's role
   client-status/            Skill: report everything in flight and open for one client
-  update-user/              Skill: add, edit, or retire a user and their assigned clients
+  setup-user/               Skill: add or edit a user, their assigned clients, and validate their external accounts
+  remove-user/              Skill: remove a user fully, including their external accounts
   setup-my-integrations/    Skill: connect one user's own external-system accounts
   train-me/                 Skill: teach a user the system, their role, and the operating contracts
   add-to-backlog/           Skill: capture a later application change

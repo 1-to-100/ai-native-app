@@ -305,7 +305,7 @@ None
     )
     write(
         repo / "system" / "external-systems.md",
-        system_header("External Systems", "system/external-systems")
+        system_header("External Systems", "system/external-systems", 2)
         + f"""# jira
 ## Display Name
 Jira
@@ -317,6 +317,8 @@ Active
 Track work the operator named.
 ## Coordination Guidance
 Keep decisions in the repository.
+## Data Mapping
+None
 ## System Administration
 The operator completed the shared installation.
 ## User Connection
@@ -371,6 +373,24 @@ class CheckTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("formats/system/extra.md", result.stdout)
         self.assertIn("system/extra.md", result.stdout)
+
+    def test_external_format_is_discovered_and_inventoried(self) -> None:
+        write(self.repo / "formats" / "external" / "design-page.md", "# Format: external/design-page (version 1)\n")
+        result = run_check(self.repo)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("formats/external/design-page.md", result.stdout)
+        self.assertIn("external/design-page.md", result.stdout)
+
+    def test_external_system_requires_data_mapping(self) -> None:
+        path = self.repo / "system" / "external-systems.md"
+        record = (
+            "# jira\n## Display Name\nJira\n## Category\nWork Management\n## Status\nPlanned\n"
+            "## Purpose\nTrack work.\n## Coordination Guidance\nNone\n## System Administration\nNone\n"
+            "## User Connection\nNone\n## Owner\nNone\n"
+        )
+        path.write_text(path.read_text(encoding="utf-8").replace("\nNone\n", "\n" + record, 1), encoding="utf-8")
+        result = run_check(self.repo)
+        self.assertIn("Data Mapping", result.stdout)
 
     def test_system_header_rejects_client_key(self) -> None:
         path = self.repo / "system" / "users.md"

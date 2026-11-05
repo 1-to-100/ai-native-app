@@ -11,11 +11,11 @@ Use this skill when a person wants to learn how this application works, or when 
 
 ## Boundaries
 
-- **Entry.** The user exists in `system/users.md`, and the operator invokes this skill for that user's email. `update-user` has recorded the primary role. Assigned clients may be `None`.
+- **Entry.** The user exists in `system/users.md`, and the operator invokes this skill for that user's email. `setup-user` has recorded the primary role. Assigned clients may be `None`.
 - **Graduation.** The user has acknowledged every required topic or has stopped at a named topic. `tmp/train-me-<user>.md` records the topics covered and the acknowledgements. No governed file is changed unless the user discovered a defect, which is handed to `review-question-journal` or `add-to-backlog`.
 - **Completed.** Every required topic was acknowledged.
 - **Stopped.** The user stops early. The report names the last completed topic.
-- **Unknown user.** The email is not in `system/users.md`. Stop and point the operator to `update-user`.
+- **Unknown user.** The email is not in `system/users.md`. Stop and point the operator to `setup-user`.
 
 ## Inputs
 
@@ -55,7 +55,7 @@ After the last acknowledgement, or when the learner stops, write `tmp/train-me-<
 
 ## Stops when
 
-The learner has acknowledged every topic, or has stopped at a named topic, and the temporary training report is written. If the email is not in `system/users.md`, the skill stops before teaching and points the operator to `update-user`.
+The learner has acknowledged every topic, or has stopped at a named topic, and the temporary training report is written. If the email is not in `system/users.md`, the skill stops before teaching and points the operator to `setup-user`.
 
 ## Never
 

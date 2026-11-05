@@ -15,7 +15,7 @@ Use this skill when a person asks what they should work on next. It reads the us
 - **Graduation.** Every step the user took on has been executed to its stage's graduation criteria or handed back with a status note, each touched `open-items.md` reflects the result, and `python3 scripts/check.py <slug>` passes for every client written.
 - **Nothing matches.** No in-flight row across the user's assigned clients sits on a stage that the user's role owns or backs up, and none is already assigned to the user. Report that, mention how many `# Open` issues each assigned client has, and stop.
 - **No assigned clients.** The user's `## Assigned Clients` is `None`. Stop and say the user has no client access.
-- **Unknown user.** The email is not in `system/users.md`. Stop and point the operator to `update-user`.
+- **Unknown user.** The email is not in `system/users.md`. Stop and point the operator to `setup-user`.
 - **Automation stage.** An in-flight row whose current stage is Automation-owned is reported for information and never offered to a person.
 - **Handed back.** The user stops a step before graduation. The row keeps the user as `Responsible` with a `Status Notes` entry saying where it stopped, so the next session resumes there.
 - Client work reads only the clients listed in this user's `## Assigned Clients`. Other client slugs on user records are never read or recited.

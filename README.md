@@ -24,7 +24,8 @@ tmp/                 git-ignored working folder for interstitial agent files, pr
 
 - Configure this repository, or set it up from scratch when required files are missing: `/setup-application`
 - Onboard a client or entity by describing it, or pointing to notes and files: `/setup-client`
-- Add, edit, or retire a user and their assigned clients: `/update-user`
+- Add or edit a user, their assigned clients, and validate their external accounts: `/setup-user`
+- Remove a user fully, including their external accounts: `/remove-user`
 - Connect one user's external-system accounts: `/setup-my-integrations`
 - Teach a user the system and their role: `/train-me`
 - Save a later application change: `/add-to-backlog`
@@ -45,7 +46,7 @@ tmp/                 git-ignored working folder for interstitial agent files, pr
 | How the overall AI-native application framework works | `docs/build-any-ai-application.md` |
 | The global scope, target AI environment, and universal repository rules | `AGENTS.md` |
 | How the business runs its workflows stage by stage, and which role or Automation owns each stage | `process/` |
-| What goes in the header and body of every governed document | `formats/README.md` and the namespaced contract under `formats/system/` or `formats/clients/` |
+| What goes in the header and body of every governed document | `formats/README.md` and the namespaced contract under `formats/system/`, `formats/clients/`, or `formats/external/` |
 | Which people, assigned clients, roles, external systems, and backlog items are shared | `system/` |
 | What procedures an agent can execute | `.agents/skills/README.md` |
 | What the deterministic linter enforces | `scripts/README.md` and `scripts/check.py` |

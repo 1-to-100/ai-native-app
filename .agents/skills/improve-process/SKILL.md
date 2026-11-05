@@ -7,7 +7,7 @@ description: Refine a mechanism change until it can be planned, then implement t
 
 ## When to use
 
-Use this skill when the operator wants to change how the application works, add or modify a workflow stage, capture a new field, tighten a guardrail, or turn a manual gap into a skill. Also use it when `process-backlog` or `review-question-journal` hands over a requirement that changes processes, formats, skills, or scripts. A change that only edits records in `system/` without changing a mechanism belongs to `setup-application` or `update-user`.
+Use this skill when the operator wants to change how the application works, add or modify a workflow stage, capture a new field, tighten a guardrail, or turn a manual gap into a skill. Also use it when `process-backlog` or `review-question-journal` hands over a requirement that changes processes, formats, skills, or scripts. A change that only edits records in `system/` without changing a mechanism belongs to `setup-application` or `setup-user`.
 
 ## Boundaries
 
@@ -39,7 +39,7 @@ Use this skill when the operator wants to change how the application works, add 
 2. **Write the implementation plan.** Walk the mechanisms in authority order and name every file the change touches:
    1. Global Context (`AGENTS.md`), including a version bump when scope or a universal rule changes.
    2. Processes (lifecycle stage files `process/*.md`), including the file's version bump and `process/README.md` when a process, stage, owner, gate, or skill reference changes.
-   3. Formats (`formats/system/` or `formats/clients/`). If a new section, column, or vocabulary value is required, the format changes first and its title version increments.
+   3. Formats (`formats/system/`, `formats/clients/`, or `formats/external/`). If a new section, column, or vocabulary value is required, the format changes first and its title version increments.
    4. Active data. Every active document of a changed format is migrated in the same change. Unknown values stay `None`, with a client issue when the document is a client file. Do not edit `archive/` or frozen history.
    5. Subtree `AGENTS.md` files.
    6. Skills (`.agents/skills/<name>/SKILL.md`) and `.agents/skills/README.md`.

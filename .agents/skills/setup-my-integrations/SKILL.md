@@ -32,7 +32,7 @@ Use this skill when one person needs to connect the external systems this applic
 
 ## Procedure
 
-1. **Confirm the user.** The email must be an `Active` heading in `system/users.md`. If the registry is `None` or the email is missing, stop and point the operator to `update-user`.
+1. **Confirm the user.** The email must be an `Active` heading in `system/users.md`. If the registry is `None` or the email is missing, stop and point the operator to `setup-user`.
 2. **List the systems.** Read `system/external-systems.md`. If it is `None`, or it has no `Planned` or `Active` record, stop and say there is nothing to connect.
 3. **Walk one system at a time.** For each `Active` system, follow `## User Connection` with the user. For each `Planned` system, do not invent a connection. Tell the operator that shared administration is unfinished and point them to `setup-application`.
 4. **Record a non-secret outcome.** For each system, record one of `connected`, `skipped`, or `blocked`, plus a short note in the operator's words. If the user pastes a token, password, or key, do not write it down. Tell them to keep it in the agent environment's own credential store and continue without that value.

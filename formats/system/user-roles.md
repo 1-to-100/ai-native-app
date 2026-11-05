@@ -45,7 +45,7 @@ A Display Name from Role Statuses (`Active` or `Retired`).
 - A role does not grant or deny repository, Git host, or external-system access.
 - A `Retired` role remains in the file and cannot be newly assigned, cannot own or back up a stage, and cannot supervise a process.
 - `## Processes` and `## Skills` name work the role performs. They are not a permission matrix.
-- Keep the number of roles small. Before adding a role, `update-user` and `setup-application` check whether an existing role already covers the work.
+- Keep the number of roles small. Before adding a role, `setup-user` and `setup-application` check whether an existing role already covers the work.
 
 ## Vocabularies
 
